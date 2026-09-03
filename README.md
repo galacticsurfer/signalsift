@@ -44,9 +44,13 @@ crosses the MCP boundary. No telemetry is ever sent externally.
 
 ## Setup
 
+**New machine? Follow [INSTALL.md](INSTALL.md)** — the complete
+from-zero walkthrough (tooling, corporate-proxy TLS, AWS profiles, MCP
+wiring for Cursor / Claude Code / Claude Desktop). Short version:
+
 ```bash
-git clone <repo-url>
-cd signal_sift
+git clone https://github.com/galacticsurfer/signalsift.git
+cd signalsift
 
 uv sync
 
