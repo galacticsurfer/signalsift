@@ -217,8 +217,14 @@ If Ollama is down, SignalSift degrades gracefully: the deterministic report
 make test    # uv run pytest
 make lint    # ruff check
 uv run python scripts/generate_test_logs.py --scenario mongodb --count 2000
-uv run python scripts/smoke_test.py          # full pipeline on fixtures, no AWS needed
-uv run python scripts/benchmark_model.py     # compare local models on fixture incidents
+uv run python scripts/smoke_test.py              # full pipeline on fixtures, no AWS needed
+uv run python scripts/compare_with_without.py    # raw-dump vs report, side by side
+uv run python scripts/benchmark_model.py         # compare local models on fixture incidents
+
+# real logs, no AWS: boot a genuinely buggy FastAPI app, capture real
+# uvicorn tracebacks, then feed any raw log file through the pipeline
+uv run python scripts/generate_fastapi_logs.py --requests 40
+uv run python scripts/run_on_raw_log.py fastapi_sample.log --errors-only
 ```
 
 Tests never require AWS or Ollama; opt-in integration tests:
