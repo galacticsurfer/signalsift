@@ -14,10 +14,9 @@ dependencies = [
     "click>=8.1.0",
 ]
 
-# Uncomment and fill in once the GitHub remote exists:
-# [project.urls]
-# Repository = "https://github.com/OWNER/signalsift"
-# Issues = "https://github.com/OWNER/signalsift/issues"
+[project.urls]
+Repository = "https://github.com/galacticsurfer/signalsift"
+Issues = "https://github.com/galacticsurfer/signalsift/issues"
 
 [project.scripts]
 signalsift = "signalsift.main:cli"

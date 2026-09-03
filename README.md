@@ -128,7 +128,7 @@ claude mcp add signalsift -- uv --directory /path/to/signal_sift run signalsift 
 Or without cloning, straight from the git remote (uvx builds and caches it):
 
 ```bash
-claude mcp add signalsift -- uvx --from git+ssh://git@github.com/OWNER/signalsift signalsift serve
+claude mcp add signalsift -- uvx --from git+https://github.com/galacticsurfer/signalsift signalsift serve
 ```
 
 Configuration comes from environment variables either way — set at least
