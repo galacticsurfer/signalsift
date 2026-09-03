@@ -200,6 +200,33 @@ class IncidentService:
             logger.warning("Timeline query failed (continuing without): %s", exc.message)
             return []
 
+    async def analyze_events(
+        self,
+        events: list,
+        *,
+        window_start: datetime,
+        window_end: datetime,
+        log_group: str = "offline",
+        service: str | None = None,
+        symptom: str | None = None,
+        semantic: bool = True,
+    ) -> IncidentReport:
+        """Run the reduction+analysis pipeline on already-fetched events.
+
+        Public entry point for offline tooling (raw log files, fixtures)
+        — same reducer, LLM call and validation as the CloudWatch path,
+        no AWS involved.
+        """
+        reduced = self._reducer.reduce(events, window_start, window_end)
+        return await self._build_report(
+            reduced,
+            log_group=log_group,
+            service=service,
+            symptom=symptom,
+            semantic=semantic and self._llm is not None,
+            report_clusters=None,
+        )
+
     async def _query_and_reduce(
         self, request: ErrorSearchRequest, metric: dict[str, Any]
     ) -> ReducedLogs:

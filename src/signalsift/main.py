@@ -108,9 +108,12 @@ def analyze(log_group, last, start, end, service, symptom, as_json) -> None:
 @click.option("--exception-type", default=None)
 @click.option("--status-code", type=int, default=None)
 @click.option("--text", default=None)
+@click.option("--semantic", is_flag=True, help="Also run local-LLM interpretation")
 @click.option("--json", "as_json", is_flag=True)
-def search(log_group, last, start, end, service, exception_type, status_code, text, as_json):
-    """Deterministic error-pattern search (no LLM)."""
+def search(
+    log_group, last, start, end, service, exception_type, status_code, text, semantic, as_json
+):
+    """Error-pattern search: deterministic by default, --semantic adds the LLM."""
     app = SignalSiftApp()
     start_dt, end_dt = _window(last, start, end)
     report = _run(
@@ -122,6 +125,7 @@ def search(log_group, last, start, end, service, exception_type, status_code, te
             exception_type=exception_type,
             status_code=status_code,
             text=text,
+            semantic=semantic,
         )
     )
     if as_json:

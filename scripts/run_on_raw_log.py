@@ -24,7 +24,6 @@ from signalsift.analysis.service import IncidentService
 from signalsift.cloudwatch.client import CloudWatchLogsClient
 from signalsift.cloudwatch.models import LogEvent
 from signalsift.config import Settings
-from signalsift.processing.reducer import LogReducer
 
 # Timestamp shapes commonly found at/near the start of log lines.
 _TS_PATTERNS = [
@@ -127,14 +126,9 @@ async def main() -> None:
         else:
             print("Ollama not reachable; deterministic-only.\n")
 
-    reduced = LogReducer(settings).reduce(events, start, end)
     service = IncidentService(settings, CloudWatchLogsClient(settings, None), llm)
-    report = await service._build_report(  # noqa: SLF001 - offline tooling
-        reduced,
-        log_group=str(args.logfile),
-        service=None,
-        symptom=None,
-        semantic=llm is not None,
+    report = await service.analyze_events(
+        events, window_start=start, window_end=end, log_group=str(args.logfile)
     )
     print(render_incident_report(report, settings.max_mcp_response_chars))
 

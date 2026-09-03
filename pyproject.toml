@@ -1,6 +1,6 @@
 [project]
 name = "signalsift"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local-first observability intelligence MCP server: CloudWatch logs -> deterministic reduction -> local LLM -> compact incident report"
 readme = "README.md"
 requires-python = ">=3.12"

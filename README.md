@@ -100,7 +100,7 @@ The CLI and the MCP server share the same service layer.
 # full incident analysis (CloudWatch → reduction → local LLM → report)
 uv run signalsift analyze --log-group /aws/app/payments-prod --last 30m
 
-# deterministic pattern search (no LLM)
+# deterministic pattern search (add --semantic for LLM interpretation)
 uv run signalsift search --log-group /aws/app/payments-prod --last 1h --status-code 502
 
 # trace one request ID
@@ -190,9 +190,14 @@ LLM only interprets already-reduced evidence:
 6. **Rank & sample** — deterministic incident score (frequency, recency,
    severity, 5xx association); first/middle/latest representative events per
    cluster, hard budgets at every layer.
-7. **One local LLM call** — a single structured-JSON analysis over the top
+7. **Full-window volume timeline** — a companion server-side
+   `stats count(*) by bin(...)` query aggregates over the ENTIRE window, so
+   the report shows the complete volume curve even when event retrieval hit
+   the query limit; if events were truncated, the report states exactly
+   which time range they cover.
+8. **One local LLM call** — a single structured-JSON analysis over the top
    clusters (never one call per cluster).
-8. **Validate** — every cluster ID and affected component the model claims is
+9. **Validate** — every cluster ID and affected component the model claims is
    checked against the evidence it was given; unsupported claims are removed
    or flagged. The report separates *Observed* / *Likely interpretation* /
    *Unknown*.
