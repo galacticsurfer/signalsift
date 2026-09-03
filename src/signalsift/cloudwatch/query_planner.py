@@ -26,7 +26,9 @@ class ErrorSearchRequest(BaseModel):
     status_code: int | None = None
     request_id: str | None = None
     text: str | None = None
-    limit: int = Field(default=2000, ge=1)
+    # None = use the configured maximum (SIGNALSIFT_MAX_QUERY_RESULTS);
+    # explicit values are still clamped to that maximum.
+    limit: int | None = Field(default=None, ge=1)
 
 
 class TraceRequest(BaseModel):
@@ -34,7 +36,7 @@ class TraceRequest(BaseModel):
     request_id: str
     start_time: datetime
     end_time: datetime
-    limit: int = Field(default=1000, ge=1)
+    limit: int | None = Field(default=None, ge=1)
 
 
 class PlannedQuery(BaseModel):

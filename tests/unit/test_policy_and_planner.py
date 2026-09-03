@@ -67,7 +67,7 @@ class TestQueryPlanner:
         assert "fields @timestamp, @message, @logStream" in planned.query_string
         assert "502" in planned.query_string
         assert "sort @timestamp desc" in planned.query_string
-        assert planned.limit == 2000
+        assert planned.limit == settings.max_query_results
 
     def test_rejects_unlisted_group(self, settings: Settings) -> None:
         with pytest.raises(LogGroupNotAllowedError):
@@ -79,7 +79,7 @@ class TestQueryPlanner:
         assert r"a\.b\*c\/" in planned.query_string
         assert r"\|" in planned.query_string  # the injected pipe is inert
         # The only effective limit directive is the planner's own.
-        assert planned.query_string.strip().endswith("limit 2000")
+        assert planned.query_string.strip().endswith(f"limit {settings.max_query_results}")
 
     def test_trace_query_sorted_ascending(self, settings: Settings) -> None:
         planned = QueryPlanner(settings).plan_trace(
