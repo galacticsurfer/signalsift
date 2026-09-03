@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "signalsift": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/absolute/path/to/signal_sift",
+        "run",
+        "signalsift",
+        "serve"
+      ],
+      "env": {
+        "SIGNALSIFT_AWS_PROFILE": "company",
+        "SIGNALSIFT_AWS_REGION": "ap-south-1",
+        "SIGNALSIFT_ALLOWED_LOG_GROUPS": "/aws/app/payments-prod,/aws/app/orders-prod",
+        "SIGNALSIFT_LLM_MODEL": "qwen3:4b"
+      }
+    }
+  }
+}

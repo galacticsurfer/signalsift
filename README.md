@@ -134,6 +134,13 @@ claude mcp add signalsift -- uvx --from git+ssh://git@github.com/OWNER/signalsif
 Configuration comes from environment variables either way — set at least
 `SIGNALSIFT_ALLOWED_LOG_GROUPS`, `SIGNALSIFT_AWS_PROFILE`/`_REGION`.
 
+### Cursor
+
+Cursor uses the same stdio MCP protocol: copy `examples/cursor_mcp.json`
+into `~/.cursor/mcp.json` (all projects) or `<repo>/.cursor/mcp.json`
+(one project), fix the `--directory` path, then enable the server under
+Cursor Settings → MCP. The `uvx --from git+...` form works there too.
+
 Claude Desktop (`claude_desktop_config.json`, see `examples/claude_config.json`):
 
 ```json
