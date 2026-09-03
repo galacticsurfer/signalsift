@@ -72,8 +72,8 @@ Environment variables (or `.env`), all prefixed `SIGNALSIFT_`:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `AWS_PROFILE` / `AWS_REGION` | – | boto3 session settings |
-| `ALLOWED_LOG_GROUPS` | *(empty = deny all)* | comma-separated log-group allowlist |
+| `AWS_PROFILE` / `AWS_REGION` | auto | boto3 chain; if unset and the chain is empty, the sole configured profile is auto-selected |
+| `ALLOWED_LOG_GROUPS` | *(empty = deny all)* | comma-separated allowlist; exact names or glob patterns (`/aws/app/*`) |
 | `MAX_TIME_RANGE_MINUTES` | 120 | maximum query window |
 | `MAX_QUERY_RESULTS` | 5000 | maximum CloudWatch events per query |
 | `OLLAMA_URL` | `http://localhost:11434` | local inference endpoint |
@@ -116,9 +116,11 @@ uv run signalsift compare \
   --baseline-start 2026-09-03T13:00:00Z --baseline-end 2026-09-03T14:00:00Z \
   --comparison-start 2026-09-03T14:00:00Z --comparison-end 2026-09-03T15:00:00Z
 
-# health & local telemetry
+# discovery, health & local telemetry
+uv run signalsift groups         # allowlisted log groups that exist in the account
 uv run signalsift health
 uv run signalsift stats
+uv run signalsift dashboard      # self-contained HTML dashboard from local telemetry
 ```
 
 ## MCP setup (Claude Code / Claude Desktop)
@@ -162,6 +164,7 @@ Claude Desktop (`claude_desktop_config.json`, see `examples/claude_config.json`)
 
 | Tool | Purpose |
 | --- | --- |
+| `list_log_groups` | discover which allowlisted log groups exist (name, size, retention) — call first when the exact name is unknown |
 | `analyze_incident` | general incident diagnosis for a log group + window |
 | `search_errors` | deterministic error-pattern discovery (no LLM); lists **every** cluster found, not just the top-ranked ones |
 | `trace_request` | chronological redacted events for one request ID |

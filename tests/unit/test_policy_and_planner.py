@@ -161,3 +161,28 @@ def test_timeline_bin_scales_with_window(settings: Settings) -> None:
     assert pick_bin_minutes(60) == 5
     assert pick_bin_minutes(120) == 5
     assert pick_bin_minutes(240) == 10
+
+
+class TestAllowlistGlobs:
+    def _policy(self, patterns: list[str]) -> SecurityPolicy:
+        return SecurityPolicy(Settings(_env_file=None, allowed_log_groups=patterns))
+
+    def test_glob_pattern_matches(self) -> None:
+        policy = self._policy(["/aws/app/*"])
+        policy.check_log_group("/aws/app/payments-prod")
+        policy.check_log_group("/aws/app/anything")
+
+    def test_glob_pattern_still_rejects_outside(self) -> None:
+        with pytest.raises(LogGroupNotAllowedError):
+            self._policy(["/aws/app/*"]).check_log_group("/aws/lambda/thing")
+
+    def test_exact_names_unchanged(self) -> None:
+        policy = self._policy(["/aws/app/payments-prod"])
+        policy.check_log_group("/aws/app/payments-prod")
+        with pytest.raises(LogGroupNotAllowedError):
+            policy.check_log_group("/aws/app/payments-prod-2")
+
+    def test_filter_log_groups(self) -> None:
+        policy = self._policy(["/aws/app/*", "/exact/name"])
+        names = ["/aws/app/a", "/aws/lambda/b", "/exact/name", "/exact/other"]
+        assert policy.filter_log_groups(names) == ["/aws/app/a", "/exact/name"]

@@ -15,7 +15,13 @@ def _app(settings: Settings) -> SignalSiftApp:
 async def test_all_tools_registered(settings: Settings) -> None:
     server = create_server(_app(settings))
     names = {tool.name for tool in await server.list_tools()}
-    assert names == {"analyze_incident", "search_errors", "trace_request", "compare_windows"}
+    assert names == {
+        "list_log_groups",
+        "analyze_incident",
+        "search_errors",
+        "trace_request",
+        "compare_windows",
+    }
 
 
 async def test_disallowed_log_group_returns_actionable_text(settings: Settings) -> None:

@@ -62,24 +62,33 @@ async def run_health_checks(settings: Settings, llm: LocalLLMProvider) -> Health
     # AWS credentials + region
     def _check_aws() -> tuple[HealthCheck, HealthCheck]:
         try:
-            import boto3
+            from signalsift.cloudwatch.client import create_boto3_session
 
-            session = boto3.Session(
-                profile_name=settings.aws_profile, region_name=settings.aws_region
-            )
+            session = create_boto3_session(settings)
             credentials = session.get_credentials()
             if credentials is None:
+                profiles = ", ".join(session.available_profiles) or "none configured"
                 return (
                     HealthCheck(
                         name="AWS credentials",
                         status="fail",
-                        detail="none found — run `aws sso login` or configure a profile",
+                        detail=(
+                            "none found — run `aws sso login --profile <name>` and set "
+                            f"SIGNALSIFT_AWS_PROFILE (profiles: {profiles})"
+                        ),
                     ),
                     HealthCheck(name="CloudWatch", status="fail", detail="skipped"),
                 )
             region = session.region_name or "not set"
+            profile_note = (
+                f", profile {session.profile_name}"
+                if session.profile_name and session.profile_name != "default"
+                else ""
+            )
             creds_check = HealthCheck(
-                name="AWS credentials", status="ok", detail=f"region {region}"
+                name="AWS credentials",
+                status="ok",
+                detail=f"region {region}{profile_note}",
             )
             try:
                 client = session.client("logs")

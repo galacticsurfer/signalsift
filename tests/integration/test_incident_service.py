@@ -281,3 +281,14 @@ async def test_timeline_failure_does_not_break_analysis(settings, fake_llm):
     report = await service.analyze_incident(LOG_GROUP, WINDOW_START, WINDOW_END)
     assert report.volume_timeline == []
     assert report.clusters  # analysis itself unaffected
+
+
+async def test_list_log_groups_respects_allowlist(settings, fake_llm):
+    service = _service([], settings, fake_llm)
+    groups = await service.list_log_groups()
+    names = [g["name"] for g in groups]
+    # conftest fake account has 4 groups; only the 2 allowlisted ones show.
+    assert names == ["/aws/app/orders-prod", "/aws/app/payments-prod"]
+    assert "/aws/app/secret-prod" not in names
+    payments = next(g for g in groups if g["name"] == "/aws/app/payments-prod")
+    assert payments["retention_days"] == 30

@@ -178,6 +178,23 @@ def compare(log_group, baseline_start, baseline_end, comparison_start, compariso
 
 
 @cli.command()
+def groups() -> None:
+    """List allowlisted log groups that exist in the AWS account."""
+    app = SignalSiftApp()
+    result = _run(app.service.list_log_groups())
+    if not result:
+        click.echo("No allowlisted log groups found in this account/region.")
+        sys.exit(1)
+    for group in result:
+        size = (
+            f"  ~{group['stored_bytes'] / 1_000_000:,.0f} MB"
+            if group["stored_bytes"] is not None
+            else ""
+        )
+        click.echo(f"{group['name']}{size}")
+
+
+@cli.command()
 @click.option("--limit", default=20, help="Number of recent operations to show")
 def stats(limit) -> None:
     """Show recent local telemetry (never sent anywhere)."""
@@ -191,6 +208,23 @@ def stats(limit) -> None:
         op = metric.pop("operation")
         rest = " ".join(f"{k}={v}" for k, v in metric.items())
         click.echo(f"{ts}  {op:<18} {rest}")
+
+
+@cli.command()
+@click.option("--output", default="signalsift_dashboard.html", type=click.Path())
+@click.option("--limit", default=200, help="Telemetry rows to include")
+def dashboard(output, limit) -> None:
+    """Generate a self-contained local HTML dashboard from telemetry."""
+    from datetime import datetime as _dt
+
+    from signalsift.observability.dashboard import render_dashboard
+
+    app = SignalSiftApp()
+    metrics = app.telemetry.recent(limit)
+    html = render_dashboard(metrics, _dt.now(UTC).strftime("%Y-%m-%d %H:%M UTC"))
+    with open(output, "w") as f:
+        f.write(html)
+    click.echo(f"Wrote {output} ({len(metrics)} operations). Open it in a browser.")
 
 
 @cli.command()

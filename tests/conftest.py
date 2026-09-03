@@ -50,6 +50,20 @@ class FakeLogsClient:
         self.stopped.append(queryId)
         return {"success": True}
 
+    def describe_log_groups(self, **kwargs: Any) -> dict[str, Any]:
+        return {
+            "logGroups": [
+                {
+                    "logGroupName": "/aws/app/payments-prod",
+                    "storedBytes": 5_000_000_000,
+                    "retentionInDays": 30,
+                },
+                {"logGroupName": "/aws/app/orders-prod", "storedBytes": 1_000_000},
+                {"logGroupName": "/aws/app/secret-prod", "storedBytes": 42},
+                {"logGroupName": "/aws/lambda/other-thing"},
+            ]
+        }
+
 
 class FakeLLMProvider:
     """Deterministic LocalLLMProvider double; records every prompt."""

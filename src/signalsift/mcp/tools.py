@@ -67,10 +67,28 @@ class SignalSiftTools:
     def __init__(self, app: SignalSiftApp) -> None:
         self._app = app
         debug = app.settings.debug
+        self.list_log_groups = handle_errors(debug)(self._list_log_groups)
         self.analyze_incident = handle_errors(debug)(self._analyze_incident)
         self.search_errors = handle_errors(debug)(self._search_errors)
         self.trace_request = handle_errors(debug)(self._trace_request)
         self.compare_windows = handle_errors(debug)(self._compare_windows)
+
+    async def _list_log_groups(self) -> str:
+        groups = await self._app.service.list_log_groups()
+        if not groups:
+            return (
+                "No allowlisted log groups exist in this AWS account/region. "
+                "Check SIGNALSIFT_ALLOWED_LOG_GROUPS (exact names or glob "
+                "patterns like /aws/app/*)."
+            )
+        lines = ["Allowlisted log groups (queryable by the other tools):", ""]
+        for group in groups:
+            size = ""
+            if group["stored_bytes"] is not None:
+                size = f"  ~{group['stored_bytes'] / 1_000_000:,.0f} MB stored"
+            retention = f"  retention {group['retention_days']}d" if group["retention_days"] else ""
+            lines.append(f"- {group['name']}{size}{retention}")
+        return "\n".join(lines)
 
     async def _analyze_incident(
         self,

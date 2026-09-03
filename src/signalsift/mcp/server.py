@@ -22,6 +22,14 @@ def create_server(app: SignalSiftApp | None = None) -> MCPServer:
     )
 
     @mcp.tool()
+    async def list_log_groups() -> str:
+        """List the CloudWatch log groups this server is allowed to query
+        (the configured allowlist, resolved against what actually exists in
+        the AWS account). Call this first when you don't know the exact log
+        group name to pass to the other tools."""
+        return await tools.list_log_groups()
+
+    @mcp.tool()
     async def analyze_incident(
         log_group: str,
         start_time: str,

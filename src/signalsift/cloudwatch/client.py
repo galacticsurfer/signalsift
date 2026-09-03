@@ -47,15 +47,39 @@ class LogsInsightsClient(Protocol):
 
     def stop_query(self, *, queryId: str) -> dict[str, Any]: ...  # noqa: N803
 
+    def describe_log_groups(self, **kwargs: Any) -> dict[str, Any]: ...
 
-def create_boto3_logs_client(settings: Settings) -> Any:
+
+def create_boto3_session(settings: Settings) -> Any:
+    """boto3 session with profile auto-detection.
+
+    Order: explicit SIGNALSIFT_AWS_PROFILE -> standard boto3 chain
+    (env vars, AWS_PROFILE, default profile, SSO cache, IAM role). If the
+    chain yields nothing and exactly ONE named profile exists in
+    ~/.aws/config, use it — so a bare `aws sso login --profile x` works
+    without duplicating the profile name into SignalSift's config.
+    Ambiguous (multiple profiles) stays explicit: we never guess.
+    """
     import boto3
 
     session = boto3.Session(
         profile_name=settings.aws_profile,
         region_name=settings.aws_region,
     )
-    return session.client("logs")
+    if settings.aws_profile is None and session.get_credentials() is None:
+        named = [p for p in session.available_profiles if p != "default"]
+        if len(named) == 1:
+            logger.info(
+                "No credentials in the default AWS chain; auto-selecting the "
+                "only configured profile %r",
+                named[0],
+            )
+            session = boto3.Session(profile_name=named[0], region_name=settings.aws_region)
+    return session
+
+
+def create_boto3_logs_client(settings: Settings) -> Any:
+    return create_boto3_session(settings).client("logs")
 
 
 class CloudWatchLogsClient:
@@ -78,6 +102,32 @@ class CloudWatchLogsClient:
             {item["field"]: item["value"] for item in row if "field" in item}
             for row in response.get("results", [])
         ]
+
+    async def list_log_groups(self, max_groups: int = 500) -> list[dict[str, Any]]:
+        """All log groups in the account/region (paginated, read-only)."""
+
+        def _describe() -> list[dict[str, Any]]:
+            client = self._get_client()
+            groups: list[dict[str, Any]] = []
+            kwargs: dict[str, Any] = {"limit": 50}
+            while len(groups) < max_groups:
+                try:
+                    response = client.describe_log_groups(**kwargs)
+                except NoCredentialsError as exc:
+                    raise AwsAuthError(
+                        "No AWS credentials found.",
+                        hint="Run `aws sso login --profile <profile>` or configure credentials.",
+                    ) from exc
+                except ClientError as exc:
+                    raise self._translate_client_error(exc) from exc
+                groups.extend(response.get("logGroups", []))
+                token = response.get("nextToken")
+                if not token:
+                    break
+                kwargs["nextToken"] = token
+            return groups[:max_groups]
+
+        return await asyncio.to_thread(_describe)
 
     async def _execute(self, planned: PlannedQuery) -> dict[str, Any]:
         query_id = await asyncio.to_thread(self._start_query, planned)

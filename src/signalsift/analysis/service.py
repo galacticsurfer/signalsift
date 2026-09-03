@@ -200,6 +200,32 @@ class IncidentService:
             logger.warning("Timeline query failed (continuing without): %s", exc.message)
             return []
 
+    async def list_log_groups(self) -> list[dict[str, Any]]:
+        """Allowlisted log groups with metadata, for dynamic discovery.
+
+        Only groups matching the allowlist (exact names or glob patterns)
+        are ever returned — the security boundary is unchanged; this just
+        makes what's inside it discoverable.
+        """
+        from signalsift.security.policy import SecurityPolicy
+
+        policy = SecurityPolicy(self._settings)
+        all_groups = await self._cloudwatch.list_log_groups()
+        by_name = {g.get("logGroupName", ""): g for g in all_groups}
+        allowed_names = policy.filter_log_groups(list(by_name))
+        result = []
+        for name in sorted(allowed_names):
+            group = by_name[name]
+            result.append(
+                {
+                    "name": name,
+                    "stored_bytes": group.get("storedBytes"),
+                    "retention_days": group.get("retentionInDays"),
+                }
+            )
+        self._telemetry.record("list_log_groups", returned=len(result))
+        return result
+
     async def analyze_events(
         self,
         events: list,
