@@ -48,6 +48,13 @@ class ClusterSummary(BaseModel):
     score: float
 
 
+class TimelinePoint(BaseModel):
+    """One bucket of the full-window volume timeline."""
+
+    time: str
+    count: int
+
+
 class IncidentReport(BaseModel):
     """Final MCP/CLI response: deterministic facts + validated semantics."""
 
@@ -57,6 +64,9 @@ class IncidentReport(BaseModel):
     window_end: str
     total_events: int
     clusters: list[ClusterSummary]
+    # Server-side aggregation over the FULL window — complete even when
+    # event retrieval was truncated by the query limit.
+    volume_timeline: list[TimelinePoint] = Field(default_factory=list)
     semantic_analysis_status: Literal["ok", "unavailable", "degraded"]
     semantic_analysis_error: str | None = None
     analysis: IncidentAnalysis | None = None

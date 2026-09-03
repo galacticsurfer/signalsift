@@ -209,3 +209,75 @@ async def test_truncated_coverage_disclosed(settings, fake_llm):
     rendered = render_incident_report(report)
     assert "UNOBSERVED" in rendered
     assert report.stats.covered_from in rendered
+
+
+class StatsAwareFakeClient(FakeLogsClient):
+    """Returns event rows for search queries and bucket rows for stats queries."""
+
+    def __init__(self, rows, stats_rows, fail_stats=False):
+        super().__init__(rows)
+        self.stats_rows = stats_rows
+        self.fail_stats = fail_stats
+        self._last_query_was_stats = False
+
+    def start_query(self, **kwargs):
+        self._last_query_was_stats = "stats count(*)" in kwargs.get("queryString", "")
+        if self._last_query_was_stats and self.fail_stats:
+            from botocore.exceptions import ClientError
+
+            raise ClientError(
+                {"Error": {"Code": "MalformedQueryException", "Message": "x"}},
+                "StartQuery",
+            )
+        return super().start_query(**kwargs)
+
+    def get_query_results(self, *, queryId):  # noqa: N803
+        if self._last_query_was_stats:
+            return {"status": "Complete", "results": self.stats_rows, "statistics": {}}
+        return super().get_query_results(queryId=queryId)
+
+
+def _stats_rows():
+    return [
+        [
+            {"field": "bin(5m)", "value": "2026-09-03 14:00:00.000"},
+            {"field": "event_count", "value": "1204"},
+        ],
+        [
+            {"field": "bin(5m)", "value": "2026-09-03 14:05:00.000"},
+            {"field": "event_count", "value": "3417"},
+        ],
+        [
+            {"field": "bin(5m)", "value": "2026-09-03 14:10:00.000"},
+            {"field": "event_count", "value": "215"},
+        ],
+    ]
+
+
+async def test_full_window_timeline_in_report_and_evidence(settings, fake_llm):
+    fast = settings.model_copy(
+        update={"query_poll_initial_seconds": 0.001, "query_poll_max_seconds": 0.002}
+    )
+    client = CloudWatchLogsClient(fast, StatsAwareFakeClient(scenario_mongodb(50), _stats_rows()))
+    service = IncidentService(fast, client, fake_llm)
+    report = await service.analyze_incident(LOG_GROUP, WINDOW_START, WINDOW_END)
+
+    assert [p.count for p in report.volume_timeline] == [1204, 3417, 215]
+    rendered = render_incident_report(report)
+    assert "VOLUME TIMELINE" in rendered
+    assert "3,417" in rendered
+    # Timeline reaches the LLM evidence too.
+    assert "full_window_volume_timeline" in fake_llm.prompts[0]
+
+
+async def test_timeline_failure_does_not_break_analysis(settings, fake_llm):
+    fast = settings.model_copy(
+        update={"query_poll_initial_seconds": 0.001, "query_poll_max_seconds": 0.002}
+    )
+    client = CloudWatchLogsClient(
+        fast, StatsAwareFakeClient(scenario_mongodb(50), [], fail_stats=True)
+    )
+    service = IncidentService(fast, client, fake_llm)
+    report = await service.analyze_incident(LOG_GROUP, WINDOW_START, WINDOW_END)
+    assert report.volume_timeline == []
+    assert report.clusters  # analysis itself unaffected

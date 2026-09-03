@@ -100,7 +100,8 @@ def test_escape_regex_neutralizes_metacharacters() -> None:
 
 
 _VALID_PIPE_STAGE = re.compile(
-    r"^(fields\s+@\w|filter\s+@\w|sort\s+@\w+\s+(asc|desc)$|limit\s+\d+$)"
+    r"^(fields\s+@\w|filter\s+@\w|sort\s+@\w+\s+(asc|desc)$|limit\s+\d+$"
+    r"|stats\s+count\(\*\)\s+as\s+\w+\s+by\s+bin\(\d+m\)$)"
 )
 
 
@@ -145,3 +146,18 @@ def test_generated_queries_are_syntactically_valid(settings: Settings) -> None:
         )
     )
     _assert_valid_insights_syntax(trace.query_string)
+
+    timeline = planner.plan_error_timeline(_request(service="payments"))
+    _assert_valid_insights_syntax(timeline.query_string)
+    assert "stats count(*) as event_count by bin(" in timeline.query_string
+    assert "limit" not in timeline.query_string  # stats runs over the full window
+
+
+def test_timeline_bin_scales_with_window(settings: Settings) -> None:
+    from signalsift.cloudwatch.query_planner import pick_bin_minutes
+
+    assert pick_bin_minutes(20) == 1
+    assert pick_bin_minutes(30) == 2
+    assert pick_bin_minutes(60) == 5
+    assert pick_bin_minutes(120) == 5
+    assert pick_bin_minutes(240) == 10

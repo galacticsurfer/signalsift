@@ -69,9 +69,20 @@ class CloudWatchLogsClient:
         return self._client
 
     async def run_query(self, planned: PlannedQuery) -> QueryResult:
+        return convert_results(await self._execute(planned))
+
+    async def run_stats_query(self, planned: PlannedQuery) -> list[dict[str, str]]:
+        """Run an aggregation query; returns raw field->value rows."""
+        response = await self._execute(planned)
+        return [
+            {item["field"]: item["value"] for item in row if "field" in item}
+            for row in response.get("results", [])
+        ]
+
+    async def _execute(self, planned: PlannedQuery) -> dict[str, Any]:
         query_id = await asyncio.to_thread(self._start_query, planned)
         try:
-            return await self._poll_results(query_id, planned)
+            return await self._poll_results(query_id)
         except (asyncio.CancelledError, CloudWatchTimeoutError):
             await asyncio.to_thread(self._stop_query_quietly, query_id)
             raise
@@ -97,7 +108,7 @@ class CloudWatchLogsClient:
             raise CloudWatchQueryError(f"AWS request failed: {exc}") from exc
         return response["queryId"]
 
-    async def _poll_results(self, query_id: str, planned: PlannedQuery) -> QueryResult:
+    async def _poll_results(self, query_id: str) -> dict[str, Any]:
         delay = self._settings.query_poll_initial_seconds
         deadline = asyncio.get_running_loop().time() + self._settings.query_timeout_seconds
         while True:
@@ -110,7 +121,7 @@ class CloudWatchLogsClient:
 
             status = response.get("status", "Unknown")
             if status == "Complete":
-                return convert_results(response)
+                return response
             if status in ("Failed", "Cancelled", "Timeout"):
                 raise CloudWatchQueryError(
                     f"CloudWatch Logs Insights query ended with status '{status}'."

@@ -11,7 +11,11 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from signalsift.cloudwatch.query_templates import build_error_search_query, build_trace_query
+from signalsift.cloudwatch.query_templates import (
+    build_error_search_query,
+    build_timeline_query,
+    build_trace_query,
+)
 from signalsift.config import Settings
 from signalsift.security.policy import SecurityPolicy
 
@@ -37,6 +41,14 @@ class TraceRequest(BaseModel):
     start_time: datetime
     end_time: datetime
     limit: int | None = Field(default=None, ge=1)
+
+
+def pick_bin_minutes(window_minutes: int) -> int:
+    """Smallest standard bin that keeps the timeline at <= ~24 buckets."""
+    for candidate in (1, 2, 5, 10, 15, 30, 60):
+        if window_minutes / candidate <= 24:
+            return candidate
+    return 120
 
 
 class PlannedQuery(BaseModel):
@@ -71,6 +83,29 @@ class QueryPlanner:
             start_time=request.start_time,
             end_time=request.end_time,
             limit=limit,
+        )
+
+    def plan_error_timeline(self, request: ErrorSearchRequest) -> PlannedQuery:
+        """Full-window volume aggregation matching the error-search filters."""
+        self._policy.check_log_group(request.log_group)
+        self._policy.check_time_range(request.start_time, request.end_time)
+        window_minutes = max(1, int((request.end_time - request.start_time).total_seconds() // 60))
+        bin_minutes = pick_bin_minutes(window_minutes)
+        query = build_timeline_query(
+            level=request.level,
+            service=request.service,
+            exception_type=request.exception_type,
+            status_code=request.status_code,
+            request_id=request.request_id,
+            text=request.text,
+            bin_minutes=bin_minutes,
+        )
+        return PlannedQuery(
+            log_group=request.log_group,
+            query_string=query,
+            start_time=request.start_time,
+            end_time=request.end_time,
+            limit=1000,  # bins, not events; far more than ever produced
         )
 
     def plan_trace(self, request: TraceRequest) -> PlannedQuery:

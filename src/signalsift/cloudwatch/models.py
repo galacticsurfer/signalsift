@@ -50,6 +50,35 @@ class QueryResult(BaseModel):
     truncated: bool = False
 
 
+class TimelineBucket(BaseModel):
+    """One bin of the full-window volume timeline (server-side stats)."""
+
+    start: datetime
+    count: int
+
+
+def parse_timeline_rows(rows: list[dict[str, str]]) -> list[TimelineBucket]:
+    """Parse `stats count(*) as event_count by bin(Nm)` result rows.
+
+    The bin field is named literally after the expression (e.g. `bin(5m)`),
+    so match any `bin(`-prefixed key.
+    """
+    buckets: list[TimelineBucket] = []
+    for row in rows:
+        time_value = next((v for k, v in row.items() if k.startswith("bin(")), None)
+        count_value = row.get("event_count")
+        if time_value is None or count_value is None:
+            continue
+        try:
+            start = parse_cloudwatch_timestamp(time_value)
+            count = int(float(count_value))
+        except (ValueError, TypeError):
+            continue
+        buckets.append(TimelineBucket(start=start, count=count))
+    buckets.sort(key=lambda b: b.start)
+    return buckets
+
+
 def parse_cloudwatch_timestamp(value: str) -> datetime:
     """Parse an @timestamp value from Logs Insights (UTC, no tz suffix)."""
     for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S"):

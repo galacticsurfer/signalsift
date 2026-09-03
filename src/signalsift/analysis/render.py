@@ -75,6 +75,16 @@ def render_incident_report(report: IncidentReport, max_chars: int = 12000) -> st
                 )
         lines.append("")
 
+        if report.volume_timeline:
+            lines.append("VOLUME TIMELINE (full window, server-side counts)")
+            lines.append("-------------------------------------------------")
+            max_count = max(p.count for p in report.volume_timeline) or 1
+            for point in report.volume_timeline[:24]:
+                bar = "#" * max(1, round(20 * point.count / max_count))
+                clock = point.time[11:16] if len(point.time) >= 16 else point.time
+                lines.append(f"{clock}  {bar} {point.count:,}")
+            lines.append("")
+
         if report.analysis and report.analysis.likely_root_causes:
             lines.append("LIKELY INTERPRETATION (local model, evidence-validated)")
             lines.append("-------------------------------------------------------")

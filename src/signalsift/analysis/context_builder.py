@@ -41,6 +41,7 @@ class ContextBuilder:
         reduced: ReducedLogs,
         service: str | None,
         log_group: str,
+        timeline: list[Any] | None = None,
     ) -> tuple[str, list[LogCluster]]:
         """Return (evidence JSON, clusters actually included)."""
         selected = reduced.clusters[: self._settings.max_clusters_to_llm]
@@ -55,6 +56,18 @@ class ContextBuilder:
             "distinct_failure_clusters": reduced.stats.clusters,
             "clusters": [self._cluster_payload(c) for c in selected],
         }
+        if timeline:
+            # Full-window volume per bucket, complete even if the event
+            # sample above was truncated.
+            payload["full_window_volume_timeline"] = [
+                [point.time, point.count] for point in timeline
+            ]
+        if reduced.stats.covered_from:
+            payload["note"] = (
+                f"event sample truncated by query limit; sampled events only "
+                f"cover {reduced.stats.covered_from} onward, but the volume "
+                "timeline covers the full window"
+            )
         text = json.dumps(payload, indent=1)
 
         # Shrink until inside the input budget: drop clusters, then examples.

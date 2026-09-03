@@ -24,7 +24,7 @@ def like_filter(field: str, value: str) -> str:
     return f"filter {field} like /{escape_regex(value)}/"
 
 
-def build_error_search_query(
+def _error_filters(
     *,
     level: str | None,
     service: str | None,
@@ -32,9 +32,8 @@ def build_error_search_query(
     status_code: int | None,
     request_id: str | None,
     text: str | None,
-    limit: int,
-) -> str:
-    lines = [BASE_FIELDS]
+) -> list[str]:
+    lines: list[str] = []
     if level:
         # Match common shapes: `ERROR`, `"level":"error"`, `level=error`.
         # One `filter` keyword with `or` between the conditions — repeating
@@ -54,8 +53,59 @@ def build_error_search_query(
         lines.append(like_filter("@message", request_id))
     if text:
         lines.append(like_filter("@message", text))
+    return lines
+
+
+def build_error_search_query(
+    *,
+    level: str | None,
+    service: str | None,
+    exception_type: str | None,
+    status_code: int | None,
+    request_id: str | None,
+    text: str | None,
+    limit: int,
+) -> str:
+    lines = [BASE_FIELDS]
+    lines.extend(
+        _error_filters(
+            level=level,
+            service=service,
+            exception_type=exception_type,
+            status_code=status_code,
+            request_id=request_id,
+            text=text,
+        )
+    )
     lines.append("sort @timestamp desc")
     lines.append(f"limit {int(limit)}")
+    return "\n| ".join(lines)
+
+
+def build_timeline_query(
+    *,
+    level: str | None,
+    service: str | None,
+    exception_type: str | None,
+    status_code: int | None,
+    request_id: str | None,
+    text: str | None,
+    bin_minutes: int,
+) -> str:
+    """Server-side volume aggregation over the FULL window.
+
+    `stats` runs over every matching event regardless of any event limit,
+    so the timeline stays complete even when event retrieval truncates.
+    """
+    lines = _error_filters(
+        level=level,
+        service=service,
+        exception_type=exception_type,
+        status_code=status_code,
+        request_id=request_id,
+        text=text,
+    )
+    lines.append(f"stats count(*) as event_count by bin({int(bin_minutes)}m)")
     return "\n| ".join(lines)
 
 

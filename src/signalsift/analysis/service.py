@@ -20,12 +20,14 @@ from signalsift.analysis.schemas import (
     ComparisonReport,
     IncidentAnalysis,
     IncidentReport,
+    TimelinePoint,
     TraceReport,
     WindowProfile,
 )
 from signalsift.analysis.validator import validate_analysis
 from signalsift.cache.sqlite import SqliteCache, make_cache_key
 from signalsift.cloudwatch.client import CloudWatchLogsClient
+from signalsift.cloudwatch.models import parse_timeline_rows
 from signalsift.cloudwatch.query_planner import (
     ErrorSearchRequest,
     QueryPlanner,
@@ -159,6 +161,7 @@ class IncidentService:
 
         with self._telemetry.timed(kind, cache_hit=False) as metric:
             reduced = await self._query_and_reduce(request, metric)
+            timeline = await self._fetch_timeline(request)
             report = await self._build_report(
                 reduced,
                 log_group=request.log_group,
@@ -166,6 +169,7 @@ class IncidentService:
                 symptom=symptom,
                 semantic=semantic,
                 report_clusters=report_clusters,
+                timeline=timeline,
             )
             metric.update(
                 cloudwatch_events=report.stats.cloudwatch_events,
@@ -178,6 +182,23 @@ class IncidentService:
         if self._cache is not None and report.semantic_analysis_status != "unavailable":
             self._cache.set(cache_key, kind, report.model_dump(mode="json"))
         return report
+
+    async def _fetch_timeline(self, request: ErrorSearchRequest) -> list[TimelinePoint]:
+        """Full-window volume timeline via server-side stats aggregation.
+
+        Complete even when event retrieval hit the query limit. Failures
+        never break the analysis — the report just omits the timeline.
+        """
+        try:
+            planned = self._planner.plan_error_timeline(request)
+            rows = await self._cloudwatch.run_stats_query(planned)
+            return [
+                TimelinePoint(time=bucket.start.isoformat(), count=bucket.count)
+                for bucket in parse_timeline_rows(rows)
+            ]
+        except SignalSiftError as exc:
+            logger.warning("Timeline query failed (continuing without): %s", exc.message)
+            return []
 
     async def _query_and_reduce(
         self, request: ErrorSearchRequest, metric: dict[str, Any]
@@ -204,6 +225,7 @@ class IncidentService:
         symptom: str | None,
         semantic: bool,
         report_clusters: int | None = None,
+        timeline: list[TimelinePoint] | None = None,
     ) -> IncidentReport:
         stats = reduced.stats
         analysis: IncidentAnalysis | None = None
@@ -220,7 +242,7 @@ class IncidentService:
             )
         elif semantic and self._llm is not None:
             evidence_json, selected = self._context_builder.build_incident_evidence(
-                reduced, service, log_group
+                reduced, service, log_group, timeline=timeline
             )
             stats.clusters_sent_to_llm = len(selected)
             stats.events_sent_to_llm = sum(len(c.representative_events) for c in selected)
@@ -257,6 +279,7 @@ class IncidentService:
                     else reduced.clusters[:report_clusters]
                 )
             ],
+            volume_timeline=timeline or [],
             semantic_analysis_status=semantic_status,  # type: ignore[arg-type]
             semantic_analysis_error=semantic_error,
             analysis=analysis,
