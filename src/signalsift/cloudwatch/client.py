@@ -68,20 +68,55 @@ def _probe_session(session: Any) -> str:
         return "invalid"
 
 
+_MAX_PROFILE_SCAN = 16
+
+
+def _credentials_present(session: Any) -> bool:
+    try:
+        return session.get_credentials() is not None
+    except Exception:  # noqa: BLE001 - SSOTokenLoadError etc. mean "not usable"
+        return False
+
+
+def _resolve_working(settings: Settings) -> tuple[str | None, list[str | None]]:
+    """Pick the AWS profile whose credentials are actually live.
+
+    Returns (chosen, all_working). `chosen` is None for the default chain.
+    - Explicit SIGNALSIFT_AWS_PROFILE wins, used verbatim.
+    - Otherwise probe the default chain, then every configured profile,
+      keeping only those that authenticate (a live SSO token or valid
+      keys). Deterministic: profiles are scanned in sorted order and the
+      default chain ranks first when valid.
+    Expired env vars / stale ~/.aws/credentials that merely *exist* but
+    don't authenticate are skipped — so a fresh `aws sso login` is picked
+    up with no SignalSift config at all.
+    """
+    import boto3
+
+    if settings.aws_profile:
+        return settings.aws_profile, [settings.aws_profile]
+
+    working: list[str | None] = []
+    base = boto3.Session(region_name=settings.aws_region)
+    if _credentials_present(base) and _probe_session(base) == "valid":
+        working.append(None)
+    for profile in sorted(base.available_profiles)[:_MAX_PROFILE_SCAN]:
+        candidate = boto3.Session(profile_name=profile, region_name=settings.aws_region)
+        if _credentials_present(candidate) and _probe_session(candidate) == "valid":
+            working.append(profile)
+
+    chosen = working[0] if working else None
+    if chosen is not None:
+        logger.info("Auto-selected authenticated AWS profile %r", chosen)
+    return chosen, working
+
+
 def create_boto3_session(settings: Settings) -> Any:
-    """boto3 session that survives stale credentials shadowing SSO logins.
+    """boto3 session using the profile whose credentials are actually live.
 
-    Order:
-    1. Explicit SIGNALSIFT_AWS_PROFILE — used as-is (explicit wins; boto3
-       also drops env-var creds from the chain for explicit profiles).
-    2. Standard boto3 chain, PROBED via STS. Expired env vars or stale
-       static keys in ~/.aws/credentials would otherwise win the chain and
-       fail every call even after a fresh `aws sso login`.
-    3. If the chain is empty or stale: each named profile is probed and the
-       first working one is used — SSO logins live in profiles, so a bare
-       `aws sso login --profile x` just works, no SignalSift config needed.
-
-    Probing costs one STS call per candidate and runs once per process.
+    Survives the classic corporate trap where expired env vars or stale
+    static keys in ~/.aws/credentials shadow a freshly logged-in SSO
+    profile. Probing costs one STS call per candidate, once per process.
     """
     import boto3
 
@@ -89,27 +124,13 @@ def create_boto3_session(settings: Settings) -> Any:
         return boto3.Session(
             profile_name=settings.aws_profile, region_name=settings.aws_region
         )
+    chosen, _ = _resolve_working(settings)
+    return boto3.Session(profile_name=chosen, region_name=settings.aws_region)
 
-    session = boto3.Session(region_name=settings.aws_region)
-    if session.get_credentials() is not None:
-        state = _probe_session(session)
-        if state != "invalid":
-            return session  # valid, or network trouble we can't improve on
-        logger.warning(
-            "Default AWS credential chain holds stale/invalid credentials "
-            "(expired env vars or old keys in ~/.aws/credentials?); "
-            "looking for a working profile instead."
-        )
 
-    for profile in session.available_profiles[:8]:
-        candidate = boto3.Session(profile_name=profile, region_name=settings.aws_region)
-        if candidate.get_credentials() is None:
-            continue
-        if _probe_session(candidate) == "valid":
-            logger.info("Using working AWS profile %r", profile)
-            return candidate
-
-    return session  # nothing usable; callers raise actionable errors
+async def resolve_active_profile(settings: Settings) -> tuple[str | None, list[str | None]]:
+    """Async wrapper around profile resolution (for the CLI/health)."""
+    return await asyncio.to_thread(_resolve_working, settings)
 
 
 def create_boto3_logs_client(settings: Settings) -> Any:

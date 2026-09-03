@@ -73,6 +73,27 @@ def health() -> None:
 
 
 @cli.command()
+def sessions() -> None:
+    """Show which AWS profiles currently authenticate (and which SignalSift picks)."""
+    from signalsift.cloudwatch.client import resolve_active_profile
+
+    app = SignalSiftApp()
+    chosen, candidates = _run(resolve_active_profile(app.settings))
+    if not candidates:
+        click.echo("No AWS profile currently authenticates.")
+        click.echo("Run `aws sso login --profile <name>` to refresh a session.")
+        sys.exit(1)
+    for name in candidates:
+        marker = "→" if name == chosen else " "
+        click.echo(f"{marker} {name or '(default chain)'}")
+    if len(candidates) > 1 and app.settings.aws_profile is None:
+        click.echo(
+            "\nMultiple profiles authenticate; SignalSift uses the arrowed one. "
+            "Set SIGNALSIFT_AWS_PROFILE to pin a different account."
+        )
+
+
+@cli.command()
 @click.option("--log-group", required=True)
 @click.option("--last", default=None, help="Relative window, e.g. 30m, 2h")
 @click.option("--start", default=None, help="ISO-8601 window start")

@@ -98,3 +98,29 @@ def test_nothing_works_returns_default_for_actionable_errors(fake_boto3) -> None
     fake_boto3.profiles = ["dead"]
     session = client_module.create_boto3_session(_settings())
     assert session.profile_name is None
+
+
+def test_resolve_working_lists_all_authenticated(fake_boto3) -> None:
+    # Your situation: several profiles configured, one has a live token.
+    fake_boto3.scenario = {
+        None: (True, False),                 # stale default chain
+        "398_Prod": (True, True),            # live SSO token
+        "QA": (True, False),                 # token missing/expired
+        "PreProd": (False, False),           # no creds
+    }
+    fake_boto3.profiles = ["398_Prod", "PreProd", "QA"]
+    from signalsift.cloudwatch.client import _resolve_working
+
+    chosen, working = _resolve_working(_settings())
+    assert chosen == "398_Prod"
+    assert working == ["398_Prod"]           # only the authenticated one
+
+
+def test_resolve_working_multiple_is_deterministic(fake_boto3) -> None:
+    fake_boto3.scenario = {"aaa": (True, True), "zzz": (True, True), "mid": (False, False)}
+    fake_boto3.profiles = ["zzz", "mid", "aaa"]
+    from signalsift.cloudwatch.client import _resolve_working
+
+    chosen, working = _resolve_working(_settings())
+    assert working == ["aaa", "zzz"]         # sorted, deterministic
+    assert chosen == "aaa"
