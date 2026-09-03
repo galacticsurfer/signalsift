@@ -76,19 +76,36 @@ class SignalSiftTools:
     async def _list_log_groups(self) -> str:
         groups = await self._app.service.list_log_groups()
         if not groups:
-            return (
-                "No allowlisted log groups exist in this AWS account/region. "
-                "Check SIGNALSIFT_ALLOWED_LOG_GROUPS (exact names or glob "
-                "patterns like /aws/app/*)."
-            )
-        lines = ["Allowlisted log groups (queryable by the other tools):", ""]
-        for group in groups:
+            return "No log groups exist in this AWS account/region."
+
+        def _fmt(group: dict) -> str:
             size = ""
             if group["stored_bytes"] is not None:
-                size = f"  ~{group['stored_bytes'] / 1_000_000:,.0f} MB stored"
+                size = f"  ~{group['stored_bytes'] / 1_000_000:,.0f} MB"
             retention = f"  retention {group['retention_days']}d" if group["retention_days"] else ""
-            lines.append(f"- {group['name']}{size}{retention}")
-        return "\n".join(lines)
+            return f"- {group['name']}{size}{retention}"
+
+        allowed = [g for g in groups if g["allowed"]]
+        blocked = [g for g in groups if not g["allowed"]]
+        lines: list[str] = []
+        if allowed:
+            lines.append("QUERYABLE now (in the allowlist):")
+            lines.extend(_fmt(g) for g in allowed)
+            lines.append("")
+        if blocked:
+            lines.append("NOT queryable — add to SIGNALSIFT_ALLOWED_LOG_GROUPS to enable:")
+            lines.extend(_fmt(g) for g in blocked)
+            lines.append("")
+        if not allowed:
+            lines.append(
+                "Nothing is allowlisted yet, so the analysis tools will refuse "
+                "every query. Pick the groups you want from the list above and "
+                "set SIGNALSIFT_ALLOWED_LOG_GROUPS (comma-separated; glob "
+                "patterns like 'benefits-broker-*' work), then restart the "
+                "server. This allowlist is a deliberate safety boundary — it "
+                "keeps the assistant from reaching log groups you didn't choose."
+            )
+        return "\n".join(lines).rstrip()
 
     async def _analyze_incident(
         self,

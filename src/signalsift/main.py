@@ -200,11 +200,11 @@ def compare(log_group, baseline_start, baseline_end, comparison_start, compariso
 
 @cli.command()
 def groups() -> None:
-    """List allowlisted log groups that exist in the AWS account."""
+    """List log groups in the account, marking which are allowlisted."""
     app = SignalSiftApp()
     result = _run(app.service.list_log_groups())
     if not result:
-        click.echo("No allowlisted log groups found in this account/region.")
+        click.echo("No log groups found in this account/region.")
         sys.exit(1)
     for group in result:
         size = (
@@ -212,7 +212,13 @@ def groups() -> None:
             if group["stored_bytes"] is not None
             else ""
         )
-        click.echo(f"{group['name']}{size}")
+        mark = "✓" if group["allowed"] else " "
+        click.echo(f"[{mark}] {group['name']}{size}")
+    if not any(g["allowed"] for g in result):
+        click.echo(
+            "\nNone allowlisted yet — add the ones you want to "
+            "SIGNALSIFT_ALLOWED_LOG_GROUPS (glob patterns allowed)."
+        )
 
 
 @cli.command()

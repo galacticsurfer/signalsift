@@ -201,29 +201,38 @@ class IncidentService:
             return []
 
     async def list_log_groups(self) -> list[dict[str, Any]]:
-        """Allowlisted log groups with metadata, for dynamic discovery.
+        """Discover log groups so the allowlist can be filled in.
 
-        Only groups matching the allowlist (exact names or glob patterns)
-        are ever returned — the security boundary is unchanged; this just
-        makes what's inside it discoverable.
+        Read-only describe (names/size/retention — never log contents), so
+        it works even with an EMPTY allowlist: that's the whole point, you
+        can't know what to allowlist until you can see what exists. Each
+        entry is flagged `allowed` (whether the query tools can reach it).
+        The security boundary is unchanged — the query tools still refuse
+        anything not allowlisted; only discovery is open.
         """
         from signalsift.security.policy import SecurityPolicy
 
         policy = SecurityPolicy(self._settings)
         all_groups = await self._cloudwatch.list_log_groups()
-        by_name = {g.get("logGroupName", ""): g for g in all_groups}
-        allowed_names = policy.filter_log_groups(list(by_name))
         result = []
-        for name in sorted(allowed_names):
-            group = by_name[name]
+        for group in all_groups:
+            name = group.get("logGroupName", "")
+            if not name:
+                continue
             result.append(
                 {
                     "name": name,
+                    "allowed": policy.is_log_group_allowed(name),
                     "stored_bytes": group.get("storedBytes"),
                     "retention_days": group.get("retentionInDays"),
                 }
             )
-        self._telemetry.record("list_log_groups", returned=len(result))
+        result.sort(key=lambda g: (not g["allowed"], g["name"]))
+        self._telemetry.record(
+            "list_log_groups",
+            returned=len(result),
+            allowed=sum(1 for g in result if g["allowed"]),
+        )
         return result
 
     async def analyze_events(

@@ -283,12 +283,27 @@ async def test_timeline_failure_does_not_break_analysis(settings, fake_llm):
     assert report.clusters  # analysis itself unaffected
 
 
-async def test_list_log_groups_respects_allowlist(settings, fake_llm):
+async def test_list_log_groups_shows_all_with_allowed_flag(settings, fake_llm):
     service = _service([], settings, fake_llm)
     groups = await service.list_log_groups()
-    names = [g["name"] for g in groups]
-    # conftest fake account has 4 groups; only the 2 allowlisted ones show.
-    assert names == ["/aws/app/orders-prod", "/aws/app/payments-prod"]
-    assert "/aws/app/secret-prod" not in names
-    payments = next(g for g in groups if g["name"] == "/aws/app/payments-prod")
-    assert payments["retention_days"] == 30
+    names = {g["name"] for g in groups}
+    # Discovery lists ALL account groups so the allowlist can be filled in.
+    assert names == {
+        "/aws/app/payments-prod",
+        "/aws/app/orders-prod",
+        "/aws/app/secret-prod",
+        "/aws/lambda/other-thing",
+    }
+    allowed = {g["name"] for g in groups if g["allowed"]}
+    assert allowed == {"/aws/app/payments-prod", "/aws/app/orders-prod"}
+    assert not next(g for g in groups if g["name"] == "/aws/app/secret-prod")["allowed"]
+    # Allowed groups sort first.
+    assert groups[0]["allowed"] is True
+
+
+async def test_list_log_groups_works_with_empty_allowlist(fake_llm):
+    empty = Settings(_env_file=None, allowed_log_groups=[], cache_path=":memory:")
+    service = _service([], empty, fake_llm)
+    groups = await service.list_log_groups()
+    assert len(groups) == 4               # discovery works with no allowlist
+    assert all(not g["allowed"] for g in groups)
