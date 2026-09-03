@@ -305,5 +305,81 @@ async def test_list_log_groups_works_with_empty_allowlist(fake_llm):
     empty = Settings(_env_file=None, allowed_log_groups=[], cache_path=":memory:")
     service = _service([], empty, fake_llm)
     groups = await service.list_log_groups()
-    assert len(groups) == 4               # discovery works with no allowlist
+    assert len(groups) == 4  # discovery works with no allowlist
     assert all(not g["allowed"] for g in groups)
+
+
+class SlicingFakeClient(FakeLogsClient):
+    """Returns bucket rows for stats queries and per-slice events keyed by
+    the query's startTime, so slicing can be verified end-to-end."""
+
+    def __init__(self, total_events: int, limit: int):
+        super().__init__([])
+        self.total_events = total_events
+        self.limit = limit
+        self.event_query_count = 0
+        self._is_stats = False
+
+    def start_query(self, **kwargs):
+        self._is_stats = "stats count(*)" in kwargs.get("queryString", "")
+        if not self._is_stats:
+            self.event_query_count += 1
+            self._win = (kwargs["startTime"], kwargs["endTime"])
+        return super().start_query(**kwargs)
+
+    def get_query_results(self, *, queryId):  # noqa: N803
+        if self._is_stats:
+            # One bucket well over the limit -> forces slicing.
+            return {
+                "status": "Complete",
+                "results": [
+                    [
+                        {"field": "bin(5m)", "value": "2026-09-03 14:00:00.000"},
+                        {"field": "event_count", "value": str(self.total_events)},
+                    ]
+                ],
+                "statistics": {},
+            }
+        # Each event query returns distinct events for its sub-window, up to limit.
+        ws, we = self._win
+        rows = []
+        for i in range(self.limit):
+            ts = f"2026-09-03 14:{(ws % 3600) // 60:02d}:{i % 60:02d}.000"
+            rows.append(
+                [
+                    {"field": "@timestamp", "value": ts},
+                    {"field": "@message", "value": f"ERROR win{ws}_evt{i} TimeoutError: db"},
+                    {"field": "@logStream", "value": "s"},
+                ]
+            )
+        matched = float(self.limit)
+        return {"status": "Complete", "results": rows, "statistics": {"recordsMatched": matched}}
+
+
+async def test_dense_window_is_sliced_for_full_coverage(settings, fake_llm):
+    fast = settings.model_copy(
+        update={
+            "query_poll_initial_seconds": 0.001,
+            "query_poll_max_seconds": 0.002,
+            "max_query_results": 100,
+            "max_query_slices": 12,
+        }
+    )
+    # 450 events over a 100-limit -> ceil(450/100) = 5 slices.
+    client = CloudWatchLogsClient(fast, SlicingFakeClient(total_events=450, limit=100))
+    service = IncidentService(fast, client, fake_llm)
+    report = await service.analyze_incident(LOG_GROUP, WINDOW_START, WINDOW_END)
+    # 5 event sub-queries ran (slicing happened), not 1.
+    assert client._client.event_query_count == 5
+    # Merged coverage far exceeds a single truncated query's 100.
+    assert report.total_events > 100
+
+
+async def test_small_window_not_sliced(settings, fake_llm):
+    fast = settings.model_copy(
+        update={"query_poll_initial_seconds": 0.001, "max_query_results": 5000}
+    )
+    client = CloudWatchLogsClient(fast, SlicingFakeClient(total_events=50, limit=5000))
+    service = IncidentService(fast, client, fake_llm)
+    await service.analyze_incident(LOG_GROUP, WINDOW_START, WINDOW_END)
+    assert client._client.event_query_count == 1  # single query, no slicing

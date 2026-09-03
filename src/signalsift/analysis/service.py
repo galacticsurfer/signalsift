@@ -9,7 +9,8 @@ is unavailable.
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+import math
+from datetime import datetime, timedelta
 from typing import Any
 
 from signalsift.analysis.context_builder import ContextBuilder
@@ -27,7 +28,7 @@ from signalsift.analysis.schemas import (
 from signalsift.analysis.validator import validate_analysis
 from signalsift.cache.sqlite import SqliteCache, make_cache_key
 from signalsift.cloudwatch.client import CloudWatchLogsClient
-from signalsift.cloudwatch.models import parse_timeline_rows
+from signalsift.cloudwatch.models import TimelineBucket, parse_timeline_rows
 from signalsift.cloudwatch.query_planner import (
     ErrorSearchRequest,
     QueryPlanner,
@@ -42,6 +43,29 @@ from signalsift.processing.redactor import Redactor
 from signalsift.processing.reducer import LogReducer, ReducedLogs
 
 logger = logging.getLogger(__name__)
+
+
+def _split_window(start: datetime, end: datetime, n: int) -> list[tuple[datetime, datetime]]:
+    """Split [start, end) into n contiguous, non-overlapping sub-windows."""
+    step = (end - start).total_seconds() / n
+    windows = []
+    for i in range(n):
+        window_start = start + timedelta(seconds=step * i)
+        window_end = end if i == n - 1 else start + timedelta(seconds=step * (i + 1))
+        windows.append((window_start, window_end))
+    return windows
+
+
+def _dedupe_events(events: list[Any]) -> list[Any]:
+    """Drop events duplicated at slice boundaries (same ts/message/stream)."""
+    seen: set[tuple] = set()
+    unique = []
+    for event in events:
+        key = (event.timestamp, event.message, event.log_stream)
+        if key not in seen:
+            seen.add(key)
+            unique.append(event)
+    return unique
 
 
 def _cluster_summary(cluster: LogCluster) -> ClusterSummary:
@@ -160,8 +184,9 @@ class IncidentService:
                 return report
 
         with self._telemetry.timed(kind, cache_hit=False) as metric:
-            reduced = await self._query_and_reduce(request, metric)
-            timeline = await self._fetch_timeline(request)
+            buckets = await self._fetch_timeline_buckets(request)
+            reduced = await self._query_and_reduce(request, metric, buckets)
+            timeline = [TimelinePoint(time=b.start.isoformat(), count=b.count) for b in buckets]
             report = await self._build_report(
                 reduced,
                 log_group=request.log_group,
@@ -183,19 +208,14 @@ class IncidentService:
             self._cache.set(cache_key, kind, report.model_dump(mode="json"))
         return report
 
-    async def _fetch_timeline(self, request: ErrorSearchRequest) -> list[TimelinePoint]:
-        """Full-window volume timeline via server-side stats aggregation.
-
-        Complete even when event retrieval hit the query limit. Failures
-        never break the analysis — the report just omits the timeline.
-        """
+    async def _fetch_timeline_buckets(self, request: ErrorSearchRequest) -> list[TimelineBucket]:
+        """Full-window volume via server-side stats — complete even when
+        event retrieval truncates. Also drives slice planning. Failures
+        never break the analysis (returns empty)."""
         try:
             planned = self._planner.plan_error_timeline(request)
             rows = await self._cloudwatch.run_stats_query(planned)
-            return [
-                TimelinePoint(time=bucket.start.isoformat(), count=bucket.count)
-                for bucket in parse_timeline_rows(rows)
-            ]
+            return parse_timeline_rows(rows)
         except SignalSiftError as exc:
             logger.warning("Timeline query failed (continuing without): %s", exc.message)
             return []
@@ -263,20 +283,44 @@ class IncidentService:
         )
 
     async def _query_and_reduce(
-        self, request: ErrorSearchRequest, metric: dict[str, Any]
+        self,
+        request: ErrorSearchRequest,
+        metric: dict[str, Any],
+        buckets: list[TimelineBucket],
     ) -> ReducedLogs:
-        planned = self._planner.plan_error_search(request)
-        result = await self._cloudwatch.run_query(planned)
-        metric.update(
-            records_scanned=result.stats.records_scanned,
-            bytes_scanned=result.stats.bytes_scanned,
-        )
-        return self._reducer.reduce(
-            result.events,
+        # Validate the FULL requested window once (allowlist + time cap):
+        # slicing must never bypass max_time_range_minutes.
+        self._planner.plan_error_search(request)
+
+        total = sum(b.count for b in buckets)
+        limit = self._settings.max_query_results
+        windows = [(request.start_time, request.end_time)]
+        if self._settings.auto_slice and total > limit:
+            n = min(self._settings.max_query_slices, math.ceil(total / limit))
+            if n > 1:
+                windows = _split_window(request.start_time, request.end_time, n)
+
+        all_events: list[Any] = []
+        any_truncated = False
+        scanned = bytes_scanned = 0.0
+        for window_start, window_end in windows:
+            sub = request.model_copy(update={"start_time": window_start, "end_time": window_end})
+            result = await self._cloudwatch.run_query(self._planner.plan_error_search(sub))
+            all_events.extend(result.events)
+            any_truncated = any_truncated or result.truncated
+            scanned += result.stats.records_scanned
+            bytes_scanned += result.stats.bytes_scanned
+
+        events = _dedupe_events(all_events)
+        metric.update(records_scanned=scanned, bytes_scanned=bytes_scanned, slices=len(windows))
+        reduced = self._reducer.reduce(
+            events,
             window_start=request.start_time,
             window_end=request.end_time,
-            source_truncated=result.truncated,
+            source_truncated=any_truncated,
         )
+        reduced.stats.query_slices = len(windows)
+        return reduced
 
     async def _build_report(
         self,

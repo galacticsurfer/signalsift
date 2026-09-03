@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     # Query guardrails
     max_time_range_minutes: int = 120
     max_query_results: int = 5000
+    # When a window holds more events than max_query_results, split it into
+    # sub-queries (each under the limit) and merge, for full coverage
+    # instead of a truncated newest-first slice. Does NOT bypass the time
+    # cap — the whole request must still be within max_time_range_minutes.
+    auto_slice: bool = True
+    max_query_slices: int = 12
     query_timeout_seconds: int = 90
     query_poll_initial_seconds: float = 1.0
     query_poll_max_seconds: float = 5.0
@@ -101,9 +107,7 @@ class Settings(BaseSettings):
                 "AWS_DEFAULT_PROFILE"
             )
         if self.aws_region is None:
-            self.aws_region = os.environ.get("AWS_REGION") or os.environ.get(
-                "AWS_DEFAULT_REGION"
-            )
+            self.aws_region = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION")
         return self
 
 

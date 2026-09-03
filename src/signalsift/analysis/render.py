@@ -138,6 +138,8 @@ def render_incident_report(report: IncidentReport, max_chars: int = 12000) -> st
     lines.append(f"Clusters sent to local LLM: {stats.clusters_sent_to_llm}")
     lines.append(f"Events sent to local LLM: {stats.events_sent_to_llm}")
     lines.append(f"Compression ratio: {report.compression_ratio}")
+    if stats.query_slices > 1:
+        lines.append(f"Window auto-sliced into {stats.query_slices} sub-queries for full coverage.")
     if stats.truncated:
         if stats.covered_from:
             lines.append(

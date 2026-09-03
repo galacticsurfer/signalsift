@@ -121,9 +121,7 @@ def create_boto3_session(settings: Settings) -> Any:
     import boto3
 
     if settings.aws_profile:
-        return boto3.Session(
-            profile_name=settings.aws_profile, region_name=settings.aws_region
-        )
+        return boto3.Session(profile_name=settings.aws_profile, region_name=settings.aws_region)
     chosen, _ = _resolve_working(settings)
     return boto3.Session(profile_name=chosen, region_name=settings.aws_region)
 

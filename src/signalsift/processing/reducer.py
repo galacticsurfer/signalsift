@@ -50,6 +50,9 @@ class ReductionStats(BaseModel):
     # When the query limit truncated results (newest-first), events only
     # cover from this time onward — the earlier window is unobserved.
     covered_from: str | None = None
+    # How many time-sliced sub-queries were merged for full coverage (1 =
+    # a single query was enough).
+    query_slices: int = 1
 
     @property
     def compression_ratio(self) -> float:
