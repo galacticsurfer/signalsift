@@ -52,7 +52,7 @@ uv sync
 
 aws sso login --profile company
 
-ollama pull qwen3.5:4b-mlx     # or your preferred small model
+ollama pull qwen2.5:7b         # non-thinking model; qwen2.5:3b on 8 GB RAM
 
 cp .env.example .env           # then edit: allowlist, region, model
 
@@ -73,7 +73,7 @@ Environment variables (or `.env`), all prefixed `SIGNALSIFT_`:
 | `MAX_TIME_RANGE_MINUTES` | 120 | maximum query window |
 | `MAX_QUERY_RESULTS` | 5000 | maximum CloudWatch events per query |
 | `OLLAMA_URL` | `http://localhost:11434` | local inference endpoint |
-| `LLM_MODEL` | `qwen3.5:4b-mlx` | any Ollama model |
+| `LLM_MODEL` | `qwen2.5:7b` | any non-thinking Ollama model |
 | `LLM_TIMEOUT_SECONDS` | 120 | inference timeout |
 | `MAX_LLM_INPUT_CHARS` | 40000 | evidence budget for the local model |
 | `MAX_MCP_RESPONSE_CHARS` | 12000 | response size cap toward Claude |
@@ -82,10 +82,14 @@ Environment variables (or `.env`), all prefixed `SIGNALSIFT_`:
 | `REDACT_EMAILS` / `REDACT_PHONE_NUMBERS` / `REDACT_IP_ADDRESSES` | true/false/false | optional PII rules (secrets are always redacted) |
 | `DEBUG` | false | expose stack traces in tool errors |
 
-Model sizing guidance: 8 GB Mac → `qwen3.5:2b`; 16 GB → `qwen3.5:4b-mlx`;
-24/32 GB → benchmark `qwen3.5:9b-mlx` with `scripts/benchmark_model.py`.
-On Linux (Ubuntu etc.) the `-mlx` tags don't apply — use standard Ollama
-tags such as `qwen3:4b` or `llama3.2:3b`; everything else is identical.
+Model guidance — **use non-thinking models only**. Thinking models (the
+qwen3 family and similar) generate a hidden reasoning chain before the
+JSON; in our A/B that meant 48s-to-timeout versus a stable handful of
+seconds, for no gain on structured extraction. Sizing: 8 GB RAM →
+`qwen2.5:3b` (fast but noticeably weaker on naming exact exceptions);
+16 GB+ → `qwen2.5:7b` (default) or `llama3.1:8b`. Compare candidates on
+your own hardware with `scripts/benchmark_model.py` — it scores structured
+facts, not prose. Works the same on macOS and Linux.
 
 ## CLI
 

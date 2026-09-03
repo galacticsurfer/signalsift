@@ -37,9 +37,11 @@ class Settings(BaseSettings):
     query_poll_initial_seconds: float = 1.0
     query_poll_max_seconds: float = 5.0
 
-    # Local LLM
+    # Local LLM. Default is a NON-thinking model: thinking models generate
+    # a hidden reasoning chain that multiplies latency and makes it
+    # unpredictable, which structured incident extraction doesn't need.
     ollama_url: str = "http://localhost:11434"
-    llm_model: str = "qwen3.5:4b-mlx"
+    llm_model: str = "qwen2.5:7b"
     llm_timeout_seconds: int = 120
     max_llm_input_chars: int = 40000
     max_llm_output_chars: int = 20000
