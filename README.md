@@ -84,6 +84,8 @@ Environment variables (or `.env`), all prefixed `SIGNALSIFT_`:
 
 Model sizing guidance: 8 GB Mac → `qwen3.5:2b`; 16 GB → `qwen3.5:4b-mlx`;
 24/32 GB → benchmark `qwen3.5:9b-mlx` with `scripts/benchmark_model.py`.
+On Linux (Ubuntu etc.) the `-mlx` tags don't apply — use standard Ollama
+tags such as `qwen3:4b` or `llama3.2:3b`; everything else is identical.
 
 ## CLI
 
