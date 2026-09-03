@@ -129,7 +129,14 @@ def render_incident_report(report: IncidentReport, max_chars: int = 12000) -> st
     lines.append(f"Events sent to local LLM: {stats.events_sent_to_llm}")
     lines.append(f"Compression ratio: {report.compression_ratio}")
     if stats.truncated:
-        lines.append("Note: some data was truncated by budget limits.")
+        if stats.covered_from:
+            lines.append(
+                f"WARNING: query limit hit — events only cover {stats.covered_from} "
+                f"onward; the window before that is UNOBSERVED (newest-first "
+                "retrieval). Narrow the window for full coverage."
+            )
+        else:
+            lines.append("Note: some data was truncated by budget limits.")
 
     return _truncate("\n".join(lines), max_chars)
 

@@ -47,6 +47,9 @@ class ReductionStats(BaseModel):
     clusters_sent_to_llm: int = 0
     events_sent_to_llm: int = 0
     truncated: bool = False
+    # When the query limit truncated results (newest-first), events only
+    # cover from this time onward — the earlier window is unobserved.
+    covered_from: str | None = None
 
     @property
     def compression_ratio(self) -> float:
@@ -140,6 +143,8 @@ class LogReducer:
         source_truncated: bool = False,
     ) -> ReducedLogs:
         stats = ReductionStats(cloudwatch_events=len(events), truncated=source_truncated)
+        if source_truncated and events:
+            stats.covered_from = min(e.timestamp for e in events).isoformat()
 
         # 1. Redaction — always before anything else sees the text.
         redacted = self._redactor.redact_events(events)

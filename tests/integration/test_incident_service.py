@@ -188,3 +188,24 @@ async def test_validation_downgrades_bad_llm_claims(settings):
     assert report.validation_warnings
     assert report.analysis.affected_components == []
     assert report.analysis.likely_root_causes[0].evidence[0].cluster_ids == []
+
+
+async def test_truncated_coverage_disclosed(settings, fake_llm):
+    from tests.conftest import FakeLogsClient
+
+    rows = scenario_mongodb(100)
+    fake_cw = FakeLogsClient(rows)
+    # Pretend CloudWatch matched far more events than were returned.
+    fake_cw.statistics["recordsMatched"] = 50000.0
+    fast = settings.model_copy(
+        update={"query_poll_initial_seconds": 0.001, "query_poll_max_seconds": 0.002}
+    )
+    from signalsift.cloudwatch.client import CloudWatchLogsClient
+
+    service = IncidentService(fast, CloudWatchLogsClient(fast, fake_cw), fake_llm)
+    report = await service.analyze_incident(LOG_GROUP, WINDOW_START, WINDOW_END)
+    assert report.stats.truncated is True
+    assert report.stats.covered_from is not None
+    rendered = render_incident_report(report)
+    assert "UNOBSERVED" in rendered
+    assert report.stats.covered_from in rendered
