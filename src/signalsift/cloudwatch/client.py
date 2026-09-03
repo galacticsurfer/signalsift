@@ -50,32 +50,66 @@ class LogsInsightsClient(Protocol):
     def describe_log_groups(self, **kwargs: Any) -> dict[str, Any]: ...
 
 
-def create_boto3_session(settings: Settings) -> Any:
-    """boto3 session with profile auto-detection.
+def _probe_session(session: Any) -> str:
+    """'valid', 'invalid' (bad/expired creds), or 'network' (can't tell)."""
+    from botocore.config import Config
+    from botocore.exceptions import EndpointConnectionError
 
-    Order: explicit SIGNALSIFT_AWS_PROFILE -> standard boto3 chain
-    (env vars, AWS_PROFILE, default profile, SSO cache, IAM role). If the
-    chain yields nothing and exactly ONE named profile exists in
-    ~/.aws/config, use it — so a bare `aws sso login --profile x` works
-    without duplicating the profile name into SignalSift's config.
-    Ambiguous (multiple profiles) stays explicit: we never guess.
+    try:
+        session.client(
+            "sts",
+            region_name=session.region_name or "us-east-1",
+            config=Config(connect_timeout=5, read_timeout=5, retries={"max_attempts": 1}),
+        ).get_caller_identity()
+        return "valid"
+    except EndpointConnectionError:
+        return "network"
+    except Exception:  # noqa: BLE001 - expired/invalid/unauthorized all mean "unusable"
+        return "invalid"
+
+
+def create_boto3_session(settings: Settings) -> Any:
+    """boto3 session that survives stale credentials shadowing SSO logins.
+
+    Order:
+    1. Explicit SIGNALSIFT_AWS_PROFILE — used as-is (explicit wins; boto3
+       also drops env-var creds from the chain for explicit profiles).
+    2. Standard boto3 chain, PROBED via STS. Expired env vars or stale
+       static keys in ~/.aws/credentials would otherwise win the chain and
+       fail every call even after a fresh `aws sso login`.
+    3. If the chain is empty or stale: each named profile is probed and the
+       first working one is used — SSO logins live in profiles, so a bare
+       `aws sso login --profile x` just works, no SignalSift config needed.
+
+    Probing costs one STS call per candidate and runs once per process.
     """
     import boto3
 
-    session = boto3.Session(
-        profile_name=settings.aws_profile,
-        region_name=settings.aws_region,
-    )
-    if settings.aws_profile is None and session.get_credentials() is None:
-        named = [p for p in session.available_profiles if p != "default"]
-        if len(named) == 1:
-            logger.info(
-                "No credentials in the default AWS chain; auto-selecting the "
-                "only configured profile %r",
-                named[0],
-            )
-            session = boto3.Session(profile_name=named[0], region_name=settings.aws_region)
-    return session
+    if settings.aws_profile:
+        return boto3.Session(
+            profile_name=settings.aws_profile, region_name=settings.aws_region
+        )
+
+    session = boto3.Session(region_name=settings.aws_region)
+    if session.get_credentials() is not None:
+        state = _probe_session(session)
+        if state != "invalid":
+            return session  # valid, or network trouble we can't improve on
+        logger.warning(
+            "Default AWS credential chain holds stale/invalid credentials "
+            "(expired env vars or old keys in ~/.aws/credentials?); "
+            "looking for a working profile instead."
+        )
+
+    for profile in session.available_profiles[:8]:
+        candidate = boto3.Session(profile_name=profile, region_name=settings.aws_region)
+        if candidate.get_credentials() is None:
+            continue
+        if _probe_session(candidate) == "valid":
+            logger.info("Using working AWS profile %r", profile)
+            return candidate
+
+    return session  # nothing usable; callers raise actionable errors
 
 
 def create_boto3_logs_client(settings: Settings) -> Any:
@@ -204,8 +238,11 @@ class CloudWatchLogsClient:
         ):
             return AwsAuthError(
                 f"AWS authentication/authorization failed ({code}).",
-                hint="Refresh credentials, e.g. `aws sso login --profile <profile>`, "
-                "and confirm the IAM policy grants CloudWatch Logs read access.",
+                hint="Refresh credentials, e.g. `aws sso login --profile <profile>`. "
+                "If you HAVE just logged in, stale AWS_* env vars or old static "
+                "keys in ~/.aws/credentials may be shadowing the SSO profile — "
+                "unset/remove them, or set SIGNALSIFT_AWS_PROFILE explicitly. "
+                "Also confirm the IAM policy grants CloudWatch Logs read access.",
             )
         if code in ("ThrottlingException", "Throttling", "LimitExceededException"):
             return CloudWatchThrottledError(
