@@ -125,6 +125,42 @@ async def test_search_errors_is_deterministic_only(settings, fake_llm):
     assert report.semantic_analysis_status == "ok"
 
 
+def _many_distinct_error_rows(n: int):
+    from tests.fixtures.generators import make_row
+
+    return [
+        make_row(WINDOW_START, f"ERROR Failure{i}Error: distinct problem number {i}")
+        for i in range(n)
+    ]
+
+
+async def test_search_returns_all_clusters_analyze_returns_top(settings, fake_llm):
+    rows = _many_distinct_error_rows(30)
+
+    search_report = await _service(rows, settings, fake_llm).search_errors(
+        LOG_GROUP, WINDOW_START, WINDOW_END
+    )
+    assert len(search_report.clusters) == 30  # sift through everything
+
+    analyze_report = await _service(rows, settings, fake_llm).analyze_incident(
+        LOG_GROUP, WINDOW_START, WINDOW_END
+    )
+    assert len(analyze_report.clusters) == settings.max_report_clusters
+
+
+async def test_search_full_listing_fits_response_cap(settings, fake_llm):
+    rows = _many_distinct_error_rows(50)
+    report = await _service(rows, settings, fake_llm).search_errors(
+        LOG_GROUP, WINDOW_START, WINDOW_END
+    )
+    rendered = render_incident_report(report, settings.max_mcp_response_chars)
+    assert len(rendered) <= settings.max_mcp_response_chars
+    # Every cluster appears, tail ones as compact lines.
+    for i in (0, 25, 49):
+        assert f"Failure{i}Error" in rendered
+    assert "SIGNALSIFT STATS" in rendered  # stats block survived the cap
+
+
 async def test_validation_downgrades_bad_llm_claims(settings):
     from signalsift.analysis.schemas import (
         Evidence,

@@ -10,6 +10,10 @@ from __future__ import annotations
 
 from signalsift.analysis.schemas import ComparisonReport, IncidentReport, TraceReport
 
+# Clusters rendered with full detail (timestamps, endpoints); anything
+# beyond this renders as a compact one-liner.
+_DETAIL_CLUSTER_LIMIT = 10
+
 
 def _truncate(text: str, limit: int) -> str:
     if len(text) <= limit:
@@ -39,21 +43,36 @@ def render_incident_report(report: IncidentReport, max_chars: int = 12000) -> st
             lines.append(report.analysis.summary)
             lines.append("")
 
-        lines.append("OBSERVED (deterministic)")
-        lines.append("------------------------")
-        for cluster in report.clusters:
-            endpoints = ", ".join(
-                f"{ep} ({n})"
-                for ep, n in sorted(cluster.affected_endpoints.items(), key=lambda kv: -kv[1])[:3]
-            )
-            lines.append(
-                f"- [{cluster.cluster_id}] {cluster.exception_type or 'no-exception'} "
-                f"x{cluster.count}: {cluster.normalized_message[:140]}"
-            )
-            lines.append(
-                f"    first {cluster.first_seen}  last {cluster.last_seen}"
-                + (f"  endpoints: {endpoints}" if endpoints else "")
-            )
+        shown = len(report.clusters)
+        total = report.stats.clusters
+        header = "OBSERVED (deterministic)"
+        if total > shown:
+            header += f" — top {shown} of {total} clusters"
+        lines.append(header)
+        lines.append("-" * len(header))
+        # Full detail for the dominant clusters, compact one-liners for the
+        # tail so a broad search can show everything within the size cap.
+        for i, cluster in enumerate(report.clusters):
+            if i < _DETAIL_CLUSTER_LIMIT:
+                endpoints = ", ".join(
+                    f"{ep} ({n})"
+                    for ep, n in sorted(
+                        cluster.affected_endpoints.items(), key=lambda kv: -kv[1]
+                    )[:3]
+                )
+                lines.append(
+                    f"- [{cluster.cluster_id}] {cluster.exception_type or 'no-exception'} "
+                    f"x{cluster.count}: {cluster.normalized_message[:140]}"
+                )
+                lines.append(
+                    f"    first {cluster.first_seen}  last {cluster.last_seen}"
+                    + (f"  endpoints: {endpoints}" if endpoints else "")
+                )
+            else:
+                lines.append(
+                    f"- [{cluster.cluster_id}] {cluster.exception_type or 'no-exception'} "
+                    f"x{cluster.count}: {cluster.normalized_message[:90]}"
+                )
         lines.append("")
 
         if report.analysis and report.analysis.likely_root_causes:

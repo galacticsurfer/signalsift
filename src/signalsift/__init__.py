@@ -4,4 +4,4 @@ __version__ = "0.1.0"
 
 # Bumped whenever the deterministic pipeline changes in a way that
 # invalidates cached results (normalization, fingerprinting, clustering).
-PROCESSING_VERSION = "1"
+PROCESSING_VERSION = "2"

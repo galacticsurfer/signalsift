@@ -93,7 +93,12 @@ class IncidentService:
             service=service,
         )
         return await self._run_analysis(
-            request, service=service, symptom=symptom, semantic=True, kind="analyze_incident"
+            request,
+            service=service,
+            symptom=symptom,
+            semantic=True,
+            kind="analyze_incident",
+            report_clusters=self._settings.max_report_clusters,
         )
 
     async def search_errors(
@@ -116,8 +121,15 @@ class IncidentService:
             status_code=status_code,
             text=text,
         )
+        # Search is for sifting: include EVERY cluster that survived the
+        # reducer's max_clusters budget, not just the top of the ranking.
         return await self._run_analysis(
-            request, service=service, symptom=None, semantic=semantic, kind="search_errors"
+            request,
+            service=service,
+            symptom=None,
+            semantic=semantic,
+            kind="search_errors",
+            report_clusters=None,
         )
 
     async def _run_analysis(
@@ -128,6 +140,7 @@ class IncidentService:
         symptom: str | None,
         semantic: bool,
         kind: str,
+        report_clusters: int | None,
     ) -> IncidentReport:
         cache_key = make_cache_key(
             kind,
@@ -152,6 +165,7 @@ class IncidentService:
                 service=service,
                 symptom=symptom,
                 semantic=semantic,
+                report_clusters=report_clusters,
             )
             metric.update(
                 cloudwatch_events=report.stats.cloudwatch_events,
@@ -189,6 +203,7 @@ class IncidentService:
         service: str | None,
         symptom: str | None,
         semantic: bool,
+        report_clusters: int | None = None,
     ) -> IncidentReport:
         stats = reduced.stats
         analysis: IncidentAnalysis | None = None
@@ -234,7 +249,14 @@ class IncidentService:
             window_start=reduced.window_start.isoformat(),
             window_end=reduced.window_end.isoformat(),
             total_events=stats.cloudwatch_events,
-            clusters=[_cluster_summary(c) for c in reduced.clusters[:10]],
+            clusters=[
+                _cluster_summary(c)
+                for c in (
+                    reduced.clusters
+                    if report_clusters is None
+                    else reduced.clusters[:report_clusters]
+                )
+            ],
             semantic_analysis_status=semantic_status,  # type: ignore[arg-type]
             semantic_analysis_error=semantic_error,
             analysis=analysis,

@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     # Reduction budgets
     max_clusters: int = 50
     max_clusters_to_llm: int = 10
+    # Clusters shown in a focused incident report (search results always
+    # include every cluster that survived the max_clusters budget).
+    max_report_clusters: int = 10
     max_examples_per_cluster: int = 3
     max_chars_per_example: int = 800
 

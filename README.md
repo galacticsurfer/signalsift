@@ -136,7 +136,7 @@ Claude Desktop (`claude_desktop_config.json`, see `examples/claude_config.json`)
 | Tool | Purpose |
 | --- | --- |
 | `analyze_incident` | general incident diagnosis for a log group + window |
-| `search_errors` | deterministic error-pattern discovery (no LLM) |
+| `search_errors` | deterministic error-pattern discovery (no LLM); lists **every** cluster found, not just the top-ranked ones |
 | `trace_request` | chronological redacted events for one request ID |
 | `compare_windows` | error-profile diff between two windows (deployments) |
 
