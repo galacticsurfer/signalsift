@@ -253,6 +253,7 @@ uv run python scripts/benchmark_model.py         # compare local models on fixtu
 # uvicorn tracebacks, then feed any raw log file through the pipeline
 uv run python scripts/generate_fastapi_logs.py --requests 40
 uv run python scripts/run_on_raw_log.py fastapi_sample.log --errors-only
+uv run python scripts/sso_probe.py          # diagnose AWS SSO token-cache key mismatches
 ```
 
 Tests never require AWS or Ollama; opt-in integration tests:
