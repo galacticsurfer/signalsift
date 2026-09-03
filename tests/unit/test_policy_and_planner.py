@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -96,3 +97,51 @@ class TestQueryPlanner:
 def test_escape_regex_neutralizes_metacharacters() -> None:
     escaped = escape_regex("^a.b$|(c)*/")
     assert escaped == r"\^a\.b\$\|\(c\)\*\/"
+
+
+_VALID_PIPE_STAGE = re.compile(
+    r"^(fields\s+@\w|filter\s+@\w|sort\s+@\w+\s+(asc|desc)$|limit\s+\d+$)"
+)
+
+
+def _assert_valid_insights_syntax(query: str) -> None:
+    """Structural check of generated Logs Insights queries.
+
+    Guards against the MalformedQueryException class of bug (e.g. a
+    repeated `filter` keyword after `or`, which CloudWatch rejects with
+    'unexpected @ symbol').
+    """
+    stages = [s.strip() for s in query.split("|")]
+    for stage in stages:
+        assert _VALID_PIPE_STAGE.match(stage), f"invalid pipe stage: {stage!r}"
+        # `or` joins conditions WITHIN one filter; the keyword must not repeat.
+        assert " or filter " not in stage, f"repeated filter keyword: {stage!r}"
+
+
+def test_generated_queries_are_syntactically_valid(settings: Settings) -> None:
+    planner = QueryPlanner(settings)
+    full = planner.plan_error_search(
+        _request(
+            service="payments",
+            exception_type="TimeoutError",
+            status_code=502,
+            request_id="req-1",
+            text="pool exhausted",
+        )
+    )
+    _assert_valid_insights_syntax(full.query_string)
+
+    default_level = planner.plan_error_search(_request())
+    _assert_valid_insights_syntax(default_level.query_string)
+    assert "or filter" not in default_level.query_string
+    assert "filter @message like /ERROR/ or @message like /error/" in default_level.query_string
+
+    trace = planner.plan_trace(
+        TraceRequest(
+            log_group="/aws/app/payments-prod",
+            request_id="abc-123",
+            start_time=START,
+            end_time=END,
+        )
+    )
+    _assert_valid_insights_syntax(trace.query_string)

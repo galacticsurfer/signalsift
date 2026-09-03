@@ -37,8 +37,12 @@ def build_error_search_query(
     lines = [BASE_FIELDS]
     if level:
         # Match common shapes: `ERROR`, `"level":"error"`, `level=error`.
+        # One `filter` keyword with `or` between the conditions — repeating
+        # `filter` after `or` is a Logs Insights syntax error
+        # (MalformedQueryException: unexpected @ symbol).
         lines.append(
-            like_filter("@message", level.upper()) + f" or {like_filter('@message', level.lower())}"
+            f"filter @message like /{escape_regex(level.upper())}/"
+            f" or @message like /{escape_regex(level.lower())}/"
         )
     if service:
         lines.append(like_filter("@message", service))
