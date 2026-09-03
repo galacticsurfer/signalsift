@@ -83,8 +83,20 @@ class OllamaProvider:
             "format": schema.model_json_schema(),
             "options": {"temperature": 0.1},
         }
+        if not self._settings.llm_thinking:
+            # Suppress hidden chain-of-thought on thinking models (qwen3
+            # etc.) — it multiplies latency for marginal gain here.
+            payload["think"] = False
         try:
             response = await self._client.post(f"{self._base_url}/api/chat", json=payload)
+            if (
+                response.status_code == 400
+                and "think" in payload
+                and "think" in response.text.lower()
+            ):
+                # Model rejects the think option entirely; retry without it.
+                del payload["think"]
+                response = await self._client.post(f"{self._base_url}/api/chat", json=payload)
         except httpx.TimeoutException as exc:
             raise LLMTimeoutError(
                 f"Local model timed out after {self._settings.llm_timeout_seconds}s.",

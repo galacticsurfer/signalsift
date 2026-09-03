@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     llm_timeout_seconds: int = 120
     max_llm_input_chars: int = 40000
     max_llm_output_chars: int = 20000
+    # Thinking models (qwen3 etc.) generate a hidden reasoning chain before
+    # the JSON — often thousands of tokens. Off by default: latency beats
+    # marginal quality here (spec §4). Ignored by non-thinking models.
+    llm_thinking: bool = False
 
     # Reduction budgets
     max_clusters: int = 50

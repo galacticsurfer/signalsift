@@ -74,3 +74,42 @@ class TestContextBuilder:
         )
         assert len(evidence) <= 1500
         assert len(selected) >= 1
+
+
+class TestOllamaThinkOption:
+    def _payload_for(self, llm_thinking: bool) -> dict:
+        import httpx
+
+        from signalsift.analysis.schemas import IncidentAnalysis
+        from signalsift.llm.ollama import OllamaProvider
+
+        captured: dict = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            import json as _json
+
+            captured.update(_json.loads(request.content))
+            return httpx.Response(
+                200,
+                json={
+                    "message": {
+                        "content": IncidentAnalysis(
+                            summary="x", severity="low"
+                        ).model_dump_json()
+                    }
+                },
+            )
+
+        settings = Settings(_env_file=None, llm_thinking=llm_thinking)
+        client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        provider = OllamaProvider(settings, client=client)
+        import asyncio
+
+        asyncio.run(provider.analyze("prompt", IncidentAnalysis))
+        return captured
+
+    def test_thinking_disabled_by_default(self) -> None:
+        assert self._payload_for(False)["think"] is False
+
+    def test_thinking_opt_in_omits_field(self) -> None:
+        assert "think" not in self._payload_for(True)
