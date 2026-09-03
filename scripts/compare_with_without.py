@@ -78,9 +78,7 @@ async def main() -> None:
     if llm is None:
         llm = FakeLLMProvider()
 
-    service = IncidentService(
-        settings, CloudWatchLogsClient(settings, FakeLogsClient(rows)), llm
-    )
+    service = IncidentService(settings, CloudWatchLogsClient(settings, FakeLogsClient(rows)), llm)
     report_model = await service.analyze_incident(
         "/aws/app/example", WINDOW_START, WINDOW_END, service="example"
     )

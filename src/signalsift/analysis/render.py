@@ -56,9 +56,9 @@ def render_incident_report(report: IncidentReport, max_chars: int = 12000) -> st
             if i < _DETAIL_CLUSTER_LIMIT:
                 endpoints = ", ".join(
                     f"{ep} ({n})"
-                    for ep, n in sorted(
-                        cluster.affected_endpoints.items(), key=lambda kv: -kv[1]
-                    )[:3]
+                    for ep, n in sorted(cluster.affected_endpoints.items(), key=lambda kv: -kv[1])[
+                        :3
+                    ]
                 )
                 lines.append(
                     f"- [{cluster.cluster_id}] {cluster.exception_type or 'no-exception'} "

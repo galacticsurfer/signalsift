@@ -93,9 +93,7 @@ class TestOllamaThinkOption:
                 200,
                 json={
                     "message": {
-                        "content": IncidentAnalysis(
-                            summary="x", severity="low"
-                        ).model_dump_json()
+                        "content": IncidentAnalysis(summary="x", severity="low").model_dump_json()
                     }
                 },
             )

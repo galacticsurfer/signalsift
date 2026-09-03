@@ -43,9 +43,13 @@ def _parse_timestamp(line: str) -> datetime | None:
         if not match:
             continue
         raw = match.group(1).replace(",", ".")
-        for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S",
-                    "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S",
-                    "%a %b %d %H:%M:%S %Y"):
+        for fmt in (
+            "%Y-%m-%d %H:%M:%S.%f",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%dT%H:%M:%S.%f",
+            "%Y-%m-%dT%H:%M:%S",
+            "%a %b %d %H:%M:%S %Y",
+        ):
             try:
                 return datetime.strptime(raw, fmt).replace(tzinfo=UTC)
             except ValueError:
@@ -91,7 +95,8 @@ async def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("logfile", type=Path)
     parser.add_argument(
-        "--errors-only", action="store_true",
+        "--errors-only",
+        action="store_true",
         help="Keep only events mentioning ERROR/CRITICAL/Traceback",
     )
     parser.add_argument("--llm", action="store_true", help="Run real local-model analysis")
@@ -125,8 +130,11 @@ async def main() -> None:
     reduced = LogReducer(settings).reduce(events, start, end)
     service = IncidentService(settings, CloudWatchLogsClient(settings, None), llm)
     report = await service._build_report(  # noqa: SLF001 - offline tooling
-        reduced, log_group=str(args.logfile), service=None,
-        symptom=None, semantic=llm is not None,
+        reduced,
+        log_group=str(args.logfile),
+        service=None,
+        symptom=None,
+        semantic=llm is not None,
     )
     print(render_incident_report(report, settings.max_mcp_response_chars))
 

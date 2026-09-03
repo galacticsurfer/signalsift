@@ -119,11 +119,20 @@ uv run signalsift stats
 
 ## MCP setup (Claude Code / Claude Desktop)
 
-Claude Code:
+Claude Code, from a local checkout:
 
 ```bash
 claude mcp add signalsift -- uv --directory /path/to/signal_sift run signalsift serve
 ```
+
+Or without cloning, straight from the git remote (uvx builds and caches it):
+
+```bash
+claude mcp add signalsift -- uvx --from git+ssh://git@github.com/OWNER/signalsift signalsift serve
+```
+
+Configuration comes from environment variables either way — set at least
+`SIGNALSIFT_ALLOWED_LOG_GROUPS`, `SIGNALSIFT_AWS_PROFILE`/`_REGION`.
 
 Claude Desktop (`claude_desktop_config.json`, see `examples/claude_config.json`):
 

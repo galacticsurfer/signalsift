@@ -6,9 +6,7 @@ from signalsift.config import Settings
 
 
 def test_allowlist_parsed_from_csv_env(monkeypatch) -> None:
-    monkeypatch.setenv(
-        "SIGNALSIFT_ALLOWED_LOG_GROUPS", "/aws/app/a, /aws/app/b ,/aws/app/c"
-    )
+    monkeypatch.setenv("SIGNALSIFT_ALLOWED_LOG_GROUPS", "/aws/app/a, /aws/app/b ,/aws/app/c")
     settings = Settings(_env_file=None)
     assert settings.allowed_log_groups == ["/aws/app/a", "/aws/app/b", "/aws/app/c"]
 

@@ -76,9 +76,7 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path("fastapi_sample.log"))
-    parser.add_argument(
-        "--requests", type=int, default=40, help="Traffic rounds (4 requests each)"
-    )
+    parser.add_argument("--requests", type=int, default=40, help="Traffic rounds (4 requests each)")
     parser.add_argument("--port", type=int, default=8901)
     args = parser.parse_args()
 
@@ -88,10 +86,20 @@ def main() -> None:
     with args.output.open("w") as log_file:
         server = subprocess.Popen(
             [
-                "uv", "run", "--with", "fastapi", "--with", "uvicorn",
-                "uvicorn", f"{Path(__file__).stem}:app",
-                "--app-dir", str(script_dir),
-                "--port", str(args.port), "--log-level", "info",
+                "uv",
+                "run",
+                "--with",
+                "fastapi",
+                "--with",
+                "uvicorn",
+                "uvicorn",
+                f"{Path(__file__).stem}:app",
+                "--app-dir",
+                str(script_dir),
+                "--port",
+                str(args.port),
+                "--log-level",
+                "info",
             ],
             stdout=log_file,
             stderr=subprocess.STDOUT,
