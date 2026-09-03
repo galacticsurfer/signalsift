@@ -6,7 +6,7 @@ similarity). Lets you decide whether 2B/4B/9B is sufficient for your Mac.
 
 Usage:
     uv run python scripts/benchmark_model.py \
-        --models qwen2.5:3b qwen2.5:7b llama3.1:8b --runs 3
+        --models qwen3:4b qwen2.5:7b qwen2.5:3b --runs 3
 """
 
 from __future__ import annotations
@@ -160,7 +160,7 @@ async def benchmark_model(model: str, runs: int) -> None:
 
 async def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--models", nargs="+", default=["qwen2.5:7b"])
+    parser.add_argument("--models", nargs="+", default=["qwen3:4b"])
     parser.add_argument("--runs", type=int, default=2)
     args = parser.parse_args()
     for model in args.models:

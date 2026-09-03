@@ -37,11 +37,12 @@ class Settings(BaseSettings):
     query_poll_initial_seconds: float = 1.0
     query_poll_max_seconds: float = 5.0
 
-    # Local LLM. Default is a NON-thinking model: thinking models generate
-    # a hidden reasoning chain that multiplies latency and makes it
-    # unpredictable, which structured incident extraction doesn't need.
+    # Local LLM. Thinking MODE is always kept off (llm_thinking below):
+    # hidden reasoning chains multiply latency unpredictably for no gain
+    # on structured extraction. qwen3:4b with thinking disabled was the
+    # best scorer in benchmarks (0.80) at the smallest footprint.
     ollama_url: str = "http://localhost:11434"
-    llm_model: str = "qwen2.5:7b"
+    llm_model: str = "qwen3:4b"
     llm_timeout_seconds: int = 120
     max_llm_input_chars: int = 40000
     max_llm_output_chars: int = 20000
