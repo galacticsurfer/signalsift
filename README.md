@@ -74,8 +74,9 @@ Environment variables (or `.env`), all prefixed `SIGNALSIFT_`:
 | --- | --- | --- |
 | `AWS_PROFILE` / `AWS_REGION` | auto | boto3 chain; if unset and the chain is empty, the sole configured profile is auto-selected |
 | `ALLOWED_LOG_GROUPS` | *(empty = deny all)* | comma-separated allowlist; exact names or glob patterns (`/aws/app/*`) |
-| `MAX_TIME_RANGE_MINUTES` | 120 | maximum query window |
+| `MAX_TIME_RANGE_MINUTES` | 120 | maximum query window (raise to query wider spans) |
 | `MAX_QUERY_RESULTS` | 5000 | maximum CloudWatch events per query |
+| `AUTO_SLICE` / `MAX_QUERY_SLICES` | true / 12 | split a dense window into sub-queries for full event coverage instead of truncating |
 | `OLLAMA_URL` | `http://localhost:11434` | local inference endpoint |
 | `LLM_MODEL` | `qwen3:4b` | any Ollama model (thinking mode force-disabled) |
 | `LLM_TIMEOUT_SECONDS` | 120 | inference timeout |
@@ -117,7 +118,8 @@ uv run signalsift compare \
   --comparison-start 2026-09-03T14:00:00Z --comparison-end 2026-09-03T15:00:00Z
 
 # discovery, health & local telemetry
-uv run signalsift groups         # allowlisted log groups that exist in the account
+uv run signalsift groups         # log groups in the account (✓ = allowlisted)
+uv run signalsift sessions       # which AWS profiles authenticate (→ = the one used)
 uv run signalsift health
 uv run signalsift stats
 uv run signalsift dashboard      # self-contained HTML dashboard from local telemetry
@@ -197,14 +199,17 @@ LLM only interprets already-reduced evidence:
 6. **Rank & sample** — deterministic incident score (frequency, recency,
    severity, 5xx association); first/middle/latest representative events per
    cluster, hard budgets at every layer.
-7. **Full-window volume timeline** — a companion server-side
+7. **Auto-slice** — if the window holds more events than the query
+   limit, it's split into sub-queries and merged for full coverage
+   (never bypassing the time cap).
+8. **Full-window volume timeline** — a companion server-side
    `stats count(*) by bin(...)` query aggregates over the ENTIRE window, so
    the report shows the complete volume curve even when event retrieval hit
    the query limit; if events were truncated, the report states exactly
    which time range they cover.
-8. **One local LLM call** — a single structured-JSON analysis over the top
+9. **One local LLM call** — a single structured-JSON analysis over the top
    clusters (never one call per cluster).
-9. **Validate** — every cluster ID and affected component the model claims is
+10. **Validate** — every cluster ID and affected component the model claims is
    checked against the evidence it was given; unsupported claims are removed
    or flagged. The report separates *Observed* / *Likely interpretation* /
    *Unknown*.
