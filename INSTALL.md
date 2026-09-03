@@ -42,6 +42,29 @@ aws logs describe-log-groups --profile <your-profile> \
   --query 'logGroups[].logGroupName' --output table
 ```
 
+### Corporate SSO / stale-credential gotcha
+
+SignalSift honors the **standard** `AWS_PROFILE` / `AWS_REGION` env vars
+(same as the aws CLI and awslabs' MCP servers), so setting those is enough
+— no SignalSift-specific variable needed. On a machine where expired
+`AWS_*` env vars or old keys in `~/.aws/credentials` shadow a fresh SSO
+login, blank them in the MCP `env` block so boto3 falls through to the
+profile (this is what the awslabs CloudWatch MCP config does):
+
+```json
+"env": {
+  "AWS_PROFILE": "your-sso-profile",
+  "AWS_REGION": "us-west-2",
+  "AWS_ACCESS_KEY_ID": "",
+  "AWS_SECRET_ACCESS_KEY": "",
+  "AWS_SESSION_TOKEN": "",
+  "SIGNALSIFT_ALLOWED_LOG_GROUPS": "/your/log-group",
+  "UV_NATIVE_TLS": "true"
+}
+```
+
+Then refresh the session: `aws sso login --profile your-sso-profile`.
+
 Prefer a named profile over exported `AWS_*` env vars: GUI-launched MCP
 servers don't inherit your shell environment, but profiles live on disk
 and work for every process.

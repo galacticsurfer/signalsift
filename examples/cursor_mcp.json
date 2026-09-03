@@ -10,10 +10,17 @@
         "serve"
       ],
       "env": {
-        "SIGNALSIFT_AWS_PROFILE": "company",
-        "SIGNALSIFT_AWS_REGION": "ap-south-1",
+        "AWS_PROFILE": "your-sso-profile",
+        "AWS_REGION": "us-west-2",
+        "AWS_DEFAULT_REGION": "us-west-2",
+        "AWS_ACCESS_KEY_ID": "",
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_SESSION_TOKEN": "",
+        "SIGNALSIFT_AWS_PROFILE": "your-sso-profile",
+        "SIGNALSIFT_AWS_REGION": "us-west-2",
         "SIGNALSIFT_ALLOWED_LOG_GROUPS": "/aws/app/payments-prod,/aws/app/orders-prod",
-        "SIGNALSIFT_LLM_MODEL": "qwen3:4b"
+        "SIGNALSIFT_LLM_MODEL": "qwen3:4b",
+        "UV_NATIVE_TLS": "true"
       }
     }
   }

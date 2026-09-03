@@ -134,7 +134,13 @@ async def resolve_active_profile(settings: Settings) -> tuple[str | None, list[s
 
 
 def create_boto3_logs_client(settings: Settings) -> Any:
-    return create_boto3_session(settings).client("logs")
+    from botocore.config import Config
+
+    from signalsift import __version__
+
+    # Tag our traffic in CloudTrail/user-agent, per awslabs convention.
+    config = Config(user_agent_extra=f"md/signalsift#{__version__}")
+    return create_boto3_session(settings).client("logs", config=config)
 
 
 class CloudWatchLogsClient:

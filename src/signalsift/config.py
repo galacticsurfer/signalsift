@@ -7,10 +7,11 @@ every query.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Annotated
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -22,7 +23,10 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # AWS
+    # AWS. SIGNALSIFT_AWS_PROFILE / _REGION win; otherwise the STANDARD
+    # AWS_PROFILE / AWS_REGION env vars are honored, so SignalSift picks up
+    # the same profile as the aws CLI and other AWS MCP servers with no
+    # SignalSift-specific config (matches awslabs' get_aws_client).
     aws_profile: str | None = None
     aws_region: str | None = None
 
@@ -87,6 +91,20 @@ class Settings(BaseSettings):
     @classmethod
     def _expand_path(cls, v: Path) -> Path:
         return v.expanduser()
+
+    @model_validator(mode="after")
+    def _fall_back_to_standard_aws_env(self) -> Settings:
+        # Honor the conventional AWS env vars when the SignalSift-specific
+        # ones are unset — same behavior as the aws CLI / awslabs servers.
+        if self.aws_profile is None:
+            self.aws_profile = os.environ.get("AWS_PROFILE") or os.environ.get(
+                "AWS_DEFAULT_PROFILE"
+            )
+        if self.aws_region is None:
+            self.aws_region = os.environ.get("AWS_REGION") or os.environ.get(
+                "AWS_DEFAULT_REGION"
+            )
+        return self
 
 
 def load_settings(**overrides: object) -> Settings:
