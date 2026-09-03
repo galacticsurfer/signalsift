@@ -1,0 +1,564 @@
+{
+ "results": [
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:00:00.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=bdd640fb-0667-1ad1-1c80-317fa3b1799d POST /order status=502 user_id=46048\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:00:45.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=bc8960a9-23b8-c1e9-3924-56de3eb13b90 POST /checkout status=502 user_id=23434\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:01:30.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=8b9d2434-e465-e150-bd9c-66b3ad3c2d6d POST /checkout status=502 user_id=21395\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:02:15.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=07a0ca6e-0822-e8f3-6c03-1199972a8469 POST /checkout status=502 user_id=22280\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:03:00.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=9a1de644-815e-f6d1-3b8f-aa1837f8a88b POST /order status=502 user_id=13478\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:03:45.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=a65ed389-b74d-0fb1-32e7-06298fadc1a6 POST /checkout status=502 user_id=81426\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:04:30.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=96da1dac-72ff-5d2a-386e-cbe06b65a6a4 POST /checkout status=502 user_id=46463\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:05:15.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=c241330b-01a9-e71f-de8a-774bcf36d58b POST /checkout status=502 user_id=30926\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:06:00.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=47229389-571a-a876-6c30-7511b2b9437a POST /order status=502 user_id=30379\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:06:45.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=562b0f79-c374-59ee-f50b-ea63371ecd7b POST /checkout status=502 user_id=23396\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:07:30.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=5be6128e-18c2-6797-6142-ea7d17be3111 POST /checkout status=502 user_id=55082\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:08:15.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=0b1f9163-ce9f-f57f-43b7-a3a69a8dca03 POST /checkout status=502 user_id=70217\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:09:00.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=ec1b8ca1-f91e-1d4c-1ff4-9b7889463e85 POST /order status=502 user_id=59615\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:09:45.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=d453dd32-4b0d-bb41-8d52-88f1142c3fe8 POST /checkout status=502 user_id=92397\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:10:30.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=5c941cf0-dc98-d2c1-e2ac-f72f9e574f7a POST /checkout status=502 user_id=85674\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:11:15.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=0bbb2599-11ce-5dd2-b45e-d1f03139d32c POST /checkout status=502 user_id=96673\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:12:00.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=fc377a4c-4a15-544d-c5e7-ce8a3a578a8e POST /order status=502 user_id=20458\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:12:45.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=19db3ad0-ddd1-dfb2-3b98-2ef8daf61a26 POST /checkout status=502 user_id=59823\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:13:30.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=d58842de-a2bc-372f-7412-b29347294739 POST /checkout status=502 user_id=57819\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:14:15.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=35a240ae-5af3-0553-5ec4-2e0829a3b2e9 POST /checkout status=502 user_id=97841\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:15:00.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=aefcfad8-efc8-9849-b3aa-7efe4458a885 POST /order status=502 user_id=94939\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:15:45.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=2bcfbe01-a28d-efe3-9bf0-027312476f57 POST /checkout status=502 user_id=80010\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:16:30.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=7656af72-29d4-beef-3eab-edcbbaa80dd4 POST /checkout status=502 user_id=59735\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:17:15.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=a3d70628-ece6-6fa2-fd51-66e6451b4cf3 POST /checkout status=502 user_id=83000\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:18:00.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=d7c524a5-5304-317f-af42-e12f3838b326 POST /order status=502 user_id=17331\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:18:45.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=ce177b4e-0837-b8a3-d261-a7ab3aa2e4f9 POST /checkout status=502 user_id=51347\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:19:30.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=3602f8ac-10f1-bc81-448a-aa9e66b2bc5b POST /checkout status=502 user_id=84341\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:20:15.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=366eb16f-508e-bad7-b7c9-3acfe059a0ee POST /checkout status=502 user_id=95909\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:21:00.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=ea1fca65-e27a-984d-6548-21d07fcd9eb1 POST /order status=502 user_id=94259\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:21:45.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=23bed01d-43cf-2fde-2493-3b83757750a9 POST /checkout status=502 user_id=42325\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:22:30.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=434308bc-89fa-6a68-8fb5-d27bbeb79919 POST /checkout status=502 user_id=86622\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:23:15.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=663f1c97-9562-69f0-e5d7-b8756dadd6c7 POST /checkout status=502 user_id=57447\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:24:00.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=2369b584-ff5e-9ff0-ff50-bde4382567b8 POST /order status=502 user_id=76784\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:24:45.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=0c0fd195-c17a-f08a-1745-d6d87e570ddf POST /checkout status=502 user_id=24371\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:25:30.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=cac5b68c-28f4-9481-a0a0-4dc427209bdf POST /checkout status=502 user_id=99192\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:26:15.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=62801c45-1043-5a10-98ae-43346c12ace8 POST /checkout status=502 user_id=60019\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:27:00.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=877409a9-77d2-1e02-ff01-cf99988c24c9 POST /order status=502 user_id=42953\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:27:45.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=f143262f-dc5c-0eed-8da0-365bf89897b9 POST /checkout status=502 user_id=11504\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:28:30.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=ae849217-1d53-434b-b881-39b9ae270da7 POST /checkout status=502 user_id=80381\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ],
+  [
+   {
+    "field": "@timestamp",
+    "value": "2026-09-03 14:29:15.000"
+   },
+   {
+    "field": "@message",
+    "value": "ERROR request_id=a4161293-c4c2-e2e3-444e-a7c8c0398710 POST /checkout status=502 user_id=54587\nTraceback (most recent call last):\n  File \"/app/payments/db.py\", line 42, in get_connection\n    return self.pool.acquire(timeout=5)\n  File \"/app/vendor/mongo/pool.py\", line 88, in acquire\n    raise MongoServerSelectionTimeout(\"No replica set members available\")\nMongoServerSelectionTimeout: No replica set members available for host mongo-primary:27017"
+   },
+   {
+    "field": "@logStream",
+    "value": "app/instance-1"
+   }
+  ]
+ ]
+}
