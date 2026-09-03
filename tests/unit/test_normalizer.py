@@ -58,3 +58,35 @@ def test_hex_hash_replaced() -> None:
 def test_memory_address_replaced() -> None:
     out = normalize_message("object at 0x7f9a2c003d10 leaked")
     assert "0x7f9a2c003d10" not in out
+
+
+def test_bare_clock_time_replaced_not_port_mangled() -> None:
+    out = normalize_message("worker restarted at 06:01:30 on port 8080")
+    assert "06:<PORT>" not in out
+    assert "<TIME>" in out
+
+
+def test_apache_syslog_date_normalizes_identically() -> None:
+    a = normalize_message(
+        "[Sun Dec 04 06:01:30 2005] [error] mod_jk child workerEnv in error state 6"
+    )
+    b = normalize_message(
+        "[Mon Dec 05 19:15:57 2005] [error] mod_jk child workerEnv in error state 6"
+    )
+    # Identical errors at different times/days must normalize identically.
+    assert a == b
+    assert "<TIMESTAMP>" in a
+
+
+def test_quoted_numeric_ids_normalized() -> None:
+    assert normalize_message("KeyError: '4'") == normalize_message("KeyError: '17'")
+    assert "<ID>" in normalize_message("KeyError: '4'")
+    # Quoted field NAMES are meaningful and must survive.
+    assert "'email'" in normalize_message("ValidationError: field 'email' missing")
+
+
+def test_numeric_path_segments_normalized() -> None:
+    a = normalize_message('INFO: 1.2.3.4 - "GET /order/4 HTTP/1.1" 500')
+    b = normalize_message('INFO: 5.6.7.8 - "GET /order/1234 HTTP/1.1" 500')
+    assert a == b
+    assert "/order/<id>" in a

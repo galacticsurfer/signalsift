@@ -21,6 +21,16 @@ _PATTERNS: list[tuple[re.Pattern[str], str]] = [
         ),
         "<TIMESTAMP>",
     ),
+    # Bare clock times (syslog/Apache style: `06:01:30`, `13:53:08.123`) —
+    # must run before the port rule, which would otherwise mangle them
+    # into `06:<PORT>:<PORT>` and split identical errors by hour.
+    (re.compile(r"\b\d{1,2}:\d{2}:\d{2}(?:[.,]\d+)?\b"), "<TIME>"),
+    # Syslog/Apache full dates ("Sun Dec 04 <TIME> 2005") — runs after the
+    # clock-time rule has already produced the <TIME> placeholder.
+    (
+        re.compile(r"\b[A-Z][a-z]{2} [A-Z][a-z]{2} {1,2}\d{1,2} <TIME> \d{4}\b"),
+        "<TIMESTAMP>",
+    ),
     # UUIDs
     (
         re.compile(
@@ -43,6 +53,12 @@ _PATTERNS: list[tuple[re.Pattern[str], str]] = [
     # long digit runs (ids), then generic integers of 3+ digits that are
     # NOT typical status codes handled earlier.
     (re.compile(r"\b\d{5,}\b"), "<ID>"),
+    # Quoted numeric values (`KeyError: '4'`, `id="123"`) are per-request
+    # identifiers, not meaningful constants.
+    (re.compile(r"'(\d{1,4})'"), "'<ID>'"),
+    (re.compile(r'"(\d{1,4})"'), '"<ID>"'),
+    # Numeric path segments: /order/42/items -> /order/<id>/items.
+    (re.compile(r"(?<=/)\d+(?=/|\s|$|[?\"'])"), "<id>"),
 ]
 
 # Status codes we preserve (anything 100-599 in an http-ish context).

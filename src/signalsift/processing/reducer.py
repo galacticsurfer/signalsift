@@ -62,13 +62,21 @@ class ReducedLogs(BaseModel):
     window_end: datetime
 
 
+_NUMERIC_SEGMENT = re.compile(r"(?<=/)\d+(?=/|$)")
+
+
+def _normalize_endpoint(path: str) -> str:
+    """Collapse numeric path segments so /order/42 and /order/7 cluster."""
+    return _NUMERIC_SEGMENT.sub("<id>", path)
+
+
 def _extract_endpoint(event: LogEvent) -> str | None:
     for key in _ENDPOINT_KEYS:
         value = event.parsed_fields.get(key)
         if isinstance(value, str) and value.startswith("/"):
-            return value
+            return _normalize_endpoint(value)
     match = _ENDPOINT_PATTERN.search(event.message)
-    return match.group(1) if match else None
+    return _normalize_endpoint(match.group(1)) if match else None
 
 
 def _extract_status_code(event: LogEvent) -> int | None:
