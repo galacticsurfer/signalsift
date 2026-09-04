@@ -172,7 +172,8 @@ def main() -> int:
             missing.append(exp)
 
     live_tokens = [
-        e for e in entries
+        e
+        for e in entries
         if e["kind"] == "sso-token" and e["expired"] is False and e["path"].parent == SSO_CACHE
     ]
 
@@ -199,9 +200,10 @@ def main() -> int:
         print("\n== Verify (sts get-caller-identity) ==")
         import boto3
 
-        profiles = sorted(
-            {e["profile"] for e in expectations if e["profile"]}
-        ) or boto3.Session().available_profiles
+        profiles = (
+            sorted({e["profile"] for e in expectations if e["profile"]})
+            or boto3.Session().available_profiles
+        )
         for profile in profiles:
             try:
                 identity = boto3.Session(profile_name=profile).client("sts").get_caller_identity()
